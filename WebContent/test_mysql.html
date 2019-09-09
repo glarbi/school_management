@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body>
+	<script type="module" src="assets/js/script_mysql.js"></script>
+	<script>
+		var mysql = require('mysql');
+		var con = mysql.createConnection({
+		  host: "localhost",
+		  user: "root",
+		  password: ""
+		});
+
+		con.connect(function(err) {
+		  if (err) throw err;
+		  console.log("Connected!");
+		});
+	</script>
+</body>
+</html>
