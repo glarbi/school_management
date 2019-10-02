@@ -2,6 +2,7 @@
 	pageEncoding="UTF-8"%>
 <%@ page import="java.util.ArrayList"%>
 <%@ page import="java.util.List"%>
+<%@ page import="java.util.Arrays"%>
 <%@ page import="org.*"%>
 <%@ page import="java.util.StringTokenizer"%>
 <%@ page import="java.time.*"%>
@@ -51,6 +52,8 @@
 						List<Integer> yearList = new ArrayList<Integer>();
 						for (int i = 0; i < 30; i++)
 							yearList.add(i, Integer.valueOf(i + 1990));
+						List<String> levelList = new ArrayList<String>(Arrays.asList("1AP","2AP","3AP","4AP","5AP","1AM","2AM","3AM","4AM","1AS","2AS","3AS"));
+
 						Integer day_naissance = 1;
 						Integer month_naissance = 1;
 						Integer year_naissance = 1;
@@ -83,6 +86,7 @@
 						String t3 = request.getParameter("Prenom");
 						String t4 = year_naissance.toString() + "-" + month_naissance.toString() + "-" + day_naissance.toString();
 						String t5 = request.getParameter("LieuNais");
+						String t14 = request.getParameter("SchoolLevel");
 						String t6 = request.getParameter("PrenomPere");
 						String t7 = request.getParameter("ProfPere");
 						String t8 = request.getParameter("NomMere");
@@ -94,13 +98,13 @@
 								+ day_inscription.toString();
 
 						if ((t1 != null && t2 != null && t3 != null && t5 != null && t6 != null && t7 != null && t8 != null
-								&& t9 != null && t10 != null && t11 != null && t12 != null
+								&& t9 != null && t10 != null && t11 != null && t12 != null && t14 != null
 								&& (!t1.isEmpty() && !t2.isEmpty() && !t3.isEmpty() && !t5.isEmpty() && !t6.isEmpty()
 										&& !t7.isEmpty() && !t8.isEmpty() && !t9.isEmpty() && !t10.isEmpty() && !t11.isEmpty()
-										&& !t12.isEmpty()))) {
+										&& !t12.isEmpty() && !t14.isEmpty()))) {
 							try {
 								Integer t1int = Integer.parseInt(t1);
-								DBManager.setSTUDENT(t1int, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13);
+								DBManager.setSTUDENT(t1int, t2, t3, t4, t5, t14, t6, t7, t8, t9, t10, t11, t12, t13);
 								t1 = null; //Pour faire entrer un nouveau athlète
 							} catch (java.lang.NumberFormatException e) {
 								System.out.println("Exception : " + e.getMessage());
@@ -113,11 +117,12 @@
 						DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 						String today = date.format(formatter);
 
-						STUDENT myStudent = new STUDENT(t1, "_", "_", "1990-01-01", "_", "_", "_", today, "_", "_", "_", "_", "_");
+						STUDENT myStudent = new STUDENT(t1, "_", "_", "1990-01-01", "_", "_", "_", today, "_", "_", "_", "_", "_", "_");
 						Integer day = null;
 						Integer month = null;
 						Integer year = null;
 						Integer idInt = null;
+						String level = null;
 						if (t1 == null || t1.equals("-1"))
 							idInt = 0;
 						else {
@@ -136,6 +141,7 @@
 								myStudent.PRENOM = ligne1.get(2).toString();
 								myStudent.DATE_NAIS = ligne1.get(3).toString();
 								myStudent.LIEU_NAIS = ligne1.get(4).toString();
+								myStudent.schoolLevel = ligne1.get(13).toString();
 								myStudent.prenomPere = ligne1.get(5).toString();
 								myStudent.profPere = ligne1.get(6).toString();
 								myStudent.nomMere = ligne1.get(7).toString();
@@ -146,7 +152,7 @@
 								myStudent.DATE_INSCRIPTION = ligne1.get(12).toString();
 							}
 						}
-						%>
+					%>
 					<form name="studentForm" method="get"
 						style="width: 50%; margin: auto; background-color: #c1d9fc; padding-bottom: 15px;" accept-charset="UTF-8">
 						<p align="center">
@@ -188,6 +194,29 @@
 							</tr>
 							<tr>
 								<th>
+									<p align="left">Niveau Scolaire :</p>
+								</th>
+
+								<th><%level = myStudent.schoolLevel; %>
+									<select name="SchoolLevel">
+											<%
+												for (int i = 0; i < levelList.size(); i++) {
+													if (level.equals(levelList.get(i))) {
+											%>
+											<option value=<%=levelList.get(i)%> selected><%=levelList.get(i)%></option>
+											<%
+													} else {
+											%>
+											<option value=<%=levelList.get(i)%>><%=levelList.get(i)%></option>
+											<%
+													}
+												}
+											%>
+									</select>
+								</th>
+							</tr>
+							<tr>
+								<th>
 									<p align="left">Date de naissance :</p>
 								</th>
 								<th>Jour : <%
@@ -210,12 +239,12 @@
 										<option value=<%=i + 1%>><%=dayList.get(i)%></option>
 										<%
 											}
-											}
+																			}
 										%>
 								</select> Mois : <select name="Month_naissance">
 										<%
 											for (int i = 0; i < monthList.size(); i++) {
-												if (month.equals(monthList.get(i))) {
+																				if (month.equals(monthList.get(i))) {
 										%>
 										<option value=<%=i + 1%> selected><%=monthList.get(i)%></option>
 										<%
@@ -224,12 +253,12 @@
 										<option value=<%=i + 1%>><%=monthList.get(i)%></option>
 										<%
 											}
-											}
+																			}
 										%>
 								</select> Année : <select name="Year_naissance">
 										<%
 											for (int i = 0; i < yearList.size(); i++) {
-												if (year.equals(yearList.get(i))) {
+																				if (year.equals(yearList.get(i))) {
 										%>
 										<option value=<%=1990 + i%> selected><%=yearList.get(i)%></option>
 										<%
@@ -238,7 +267,7 @@
 										<option value=<%=1990 + i%>><%=yearList.get(i)%></option>
 										<%
 											}
-											}
+																			}
 										%>
 								</select>
 								</th>
@@ -337,16 +366,16 @@
 								</th>
 								<th>Jour : <%
 									st1 = new StringTokenizer(myStudent.DATE_INSCRIPTION, "-");
-									if (st1.hasMoreTokens())
-										year = Integer.valueOf(st1.nextToken());
-									if (st1.hasMoreTokens())
-										month = Integer.valueOf(st1.nextToken());
-									if (st1.hasMoreTokens())
-										day = Integer.valueOf(st1.nextToken());
+															if (st1.hasMoreTokens())
+																year = Integer.valueOf(st1.nextToken());
+															if (st1.hasMoreTokens())
+																month = Integer.valueOf(st1.nextToken());
+															if (st1.hasMoreTokens())
+																day = Integer.valueOf(st1.nextToken());
 								%> <select name="Day_inscription">
 										<%
 											for (int i = 0; i < dayList.size(); i++) {
-												if (day.equals(dayList.get(i))) {
+																				if (day.equals(dayList.get(i))) {
 										%>
 										<option value=<%=i + 1%> selected><%=dayList.get(i)%></option>
 										<%
@@ -355,12 +384,12 @@
 										<option value=<%=i + 1%>><%=dayList.get(i)%></option>
 										<%
 											}
-											}
+																			}
 										%>
 								</select> Mois : <select name="Month_inscription">
 										<%
 											for (int i = 0; i < monthList.size(); i++) {
-												if (month.equals(monthList.get(i))) {
+																				if (month.equals(monthList.get(i))) {
 										%>
 										<option value=<%=i + 1%> selected><%=monthList.get(i)%></option>
 										<%
@@ -369,12 +398,12 @@
 										<option value=<%=i + 1%>><%=monthList.get(i)%></option>
 										<%
 											}
-											}
+																			}
 										%>
 								</select> Année : <select name="Year_inscription">
 										<%
 											for (int i = 0; i < yearList.size(); i++) {
-												if (year.equals(yearList.get(i))) {
+																				if (year.equals(yearList.get(i))) {
 										%>
 										<option value=<%=1990 + i%> selected><%=yearList.get(i)%></option>
 										<%
@@ -383,7 +412,7 @@
 										<option value=<%=1990 + i%>><%=yearList.get(i)%></option>
 										<%
 											}
-											}
+																			}
 										%>
 								</select>
 								</th>

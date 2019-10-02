@@ -77,6 +77,21 @@ System.out.println("INFO -- Create table : "+myRequest);
 		}
 
 		try {
+			//Création de la table "STUDENT"
+			myRequest = "CREATE TABLE IF NOT EXISTS SCHOOL_LEVEL ("+
+			"ID INTEGER PRIMARY KEY,"+ // Identifiant l'élève (101-infini)
+			"LEVEL VARCHAR(30) NOT NULL) ENGINE = InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";
+//Afficher myRequest
+System.out.println("INFO -- Create table : "+myRequest);
+			pStmt = con.prepareStatement(myRequest);
+			pStmt.executeUpdate();
+			pStmt.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			ret = -1;
+		}
+
+		try {
 			//Création de la table "TEACHER"
 			myRequest = "CREATE TABLE IF NOT EXISTS TEACHER ("+
 			"ID INTEGER PRIMARY KEY,"+ // Identifiant enseignant (1-100)
@@ -142,7 +157,7 @@ System.out.println("INFO -- Create table : "+myRequest);
 	}
 	
 	public static void setSTUDENT(Integer id, String nom, String prenom, String dateNais, String lieuNais,
-			String prenomPere, String profPere, String nomMere, String prenomMere, String profMere,
+			String sLevel, String prenomPere, String profPere, String nomMere, String prenomMere, String profMere,
 			String adresse, String tel, String dateInscription)
 	{
 		if (id.intValue() > 0) {
@@ -150,6 +165,7 @@ System.out.println("INFO -- Create table : "+myRequest);
 			if (prenom == null) prenom = "";
 			if (dateNais == null) dateNais = "01/01/2000";
 			if (lieuNais == null) lieuNais = "";
+			if (sLevel == null) sLevel = "";
 			if (prenomPere == null) prenomPere = "";
 			if (profPere == null) profPere = "";
 			if (nomMere == null) nomMere = "";
@@ -197,10 +213,35 @@ System.out.println("setSTUDENT3 : "+myRequest);
 					pStmt = con.prepareStatement(myRequest);
 					pStmt.executeUpdate();
 					pStmt.close();
+
 					//Initialisation de l'assurance
 					init_ASSURANCE(id);
 					//Initialisation du paiement
 					init_PAIEMENT(id);
+				}
+
+				myRequest = "SELECT * FROM SCHOOL_LEVEL WHERE ID=" + id.toString();
+//Afficher myRequest
+System.out.println("setSTUDENT4 : "+myRequest);
+				pStmt = con.prepareStatement(myRequest);
+				rs = pStmt.executeQuery();
+				if ( rs.next() ) {
+					pStmt.close();
+					myRequest = "UPDATE SCHOOL_LEVEL SET level='" + sLevel + "' WHERE ID=" + id.toString();
+//Afficher myRequest
+System.out.println("setSTUDENT5 : "+myRequest);
+					pStmt = con.prepareStatement(myRequest);
+					pStmt.executeUpdate();
+					pStmt.close();
+				}
+				else {
+					pStmt.close();
+					myRequest = "INSERT INTO SCHOOL_LEVEL (ID,LEVEL) VALUES (" + id + ",'" + sLevel + "')";
+//Afficher myRequest
+System.out.println("setSTUDENT6 : " + myRequest);
+					pStmt = con.prepareStatement(myRequest);
+					pStmt.executeUpdate();
+					pStmt.close();
 				}
 			} catch (SQLException e) {
 				e.printStackTrace();
@@ -213,7 +254,7 @@ System.out.println("setSTUDENT3 : "+myRequest);
 					}
 				}
 			}
-		}		
+		}
 	}
 	
 	public static void setTEACHER(Integer id, String nom, String prenom, String dateNais, String lieuNais,
@@ -356,7 +397,7 @@ System.out.println("setTEACHER3 : "+myRequest);
 			students.add(0, ret);
 		} else {
 			try {
-				String myRequest = "";
+				String myRequest = "", myRequestLevel = "";
 				if ((id != null && nom != null && prenom != null
 					&& id == 0 && nom.isEmpty() && prenom.isEmpty()) ||
 					(id != null && nom != null && prenom != null
@@ -377,9 +418,11 @@ System.out.println("setTEACHER3 : "+myRequest);
 //Afficher myRequest
 System.out.println("getstudents : "+myRequest);
 
+				
 				PreparedStatement pStmt = con.prepareStatement(myRequest);
 				ResultSet rs = pStmt.executeQuery();
 				int j = 0;
+				String _sLevel = "";
 				while (rs.next()) {
 					ArrayList<Object> student = new ArrayList<Object>();
 
@@ -410,6 +453,16 @@ System.out.println("getstudents : "+myRequest);
 					student.add(10, _adresse);
 					student.add(11, _tel);
 					student.add(12, _dateInscription);
+					
+					myRequestLevel = "SELECT * FROM SCHOOL_LEVEL WHERE ID=" + _id.toString();
+//Afficher myRequest
+System.out.println("getstudents : "+myRequestLevel);
+					PreparedStatement pStmtLevel = con.prepareStatement(myRequestLevel);
+					ResultSet rsLevel = pStmtLevel.executeQuery();
+					_sLevel = "";
+					if (rsLevel.next()) _sLevel = rsLevel.getString("level");
+
+					student.add(13, _sLevel);
 
 					students.add(j, student);
 					j++;
@@ -436,31 +489,38 @@ System.out.println("getstudents : "+myRequest);
 		if (con != null) {
 			try {
 				String myRequest = "";
-				if (id != null && id > 0){
+				if (id != null && id > 100){
 					myRequest = "SELECT * FROM STUDENT WHERE ID=" + id.toString();
-				}
 //Afficher myRequest
 System.out.println("getSTUDENT(id) : "+myRequest);
 
-				PreparedStatement pStmt = con.prepareStatement(myRequest);
-				ResultSet rs = pStmt.executeQuery();
-				while (rs.next()) {
-					ret = new STUDENT();
-					ret.ID = String.valueOf(rs.getInt("ID"));
-					ret.NOM = rs.getString("NOM");
-					ret.PRENOM = rs.getString("PRENOM");
-					ret.DATE_NAIS = rs.getDate("DATE_NAIS").toString();
-					ret.LIEU_NAIS = rs.getString("LIEU_NAIS");
-					ret.prenomPere = rs.getString("PRENOM_PERE");
-					ret.profPere = rs.getString("PROFESSION_PERE");
-					ret.nomMere = rs.getString("NOM_MERE");
-					ret.prenomMere = rs.getString("PRENOM_MERE");
-					ret.profMere = rs.getString("PROFESSION_MERE");
-					ret.ADRESSE = rs.getString("ADRESSE");
-					ret.NUM_TEL = rs.getString("NUM_TEL");
-					ret.DATE_INSCRIPTION = rs.getDate("DATE_INSCRIPTION").toString();
+					PreparedStatement pStmt = con.prepareStatement(myRequest);
+					ResultSet rs = pStmt.executeQuery();
+					if (rs.next()) {
+						ret = new STUDENT();
+						ret.ID = String.valueOf(rs.getInt("ID"));
+						ret.NOM = rs.getString("NOM");
+						ret.PRENOM = rs.getString("PRENOM");
+						ret.DATE_NAIS = rs.getDate("DATE_NAIS").toString();
+						ret.LIEU_NAIS = rs.getString("LIEU_NAIS");
+						ret.prenomPere = rs.getString("PRENOM_PERE");
+						ret.profPere = rs.getString("PROFESSION_PERE");
+						ret.nomMere = rs.getString("NOM_MERE");
+						ret.prenomMere = rs.getString("PRENOM_MERE");
+						ret.profMere = rs.getString("PROFESSION_MERE");
+						ret.ADRESSE = rs.getString("ADRESSE");
+						ret.NUM_TEL = rs.getString("NUM_TEL");
+						ret.DATE_INSCRIPTION = rs.getDate("DATE_INSCRIPTION").toString();
+						
+						myRequest = "SELECT * FROM SCHOOL_LEVEL WHERE ID=" + id.toString();
+//Afficher myRequest
+System.out.println("getSTUDENT(id)1 : "+myRequest);
+						PreparedStatement pStmtLevel = con.prepareStatement(myRequest);
+						ResultSet rsLevel = pStmtLevel.executeQuery();
+						if (rsLevel.next()) ret.schoolLevel = rsLevel.getString("level");
+					}
+					pStmt.close();
 				}
-				pStmt.close();
 			} catch (SQLException e) {
 				e.printStackTrace();
 			} finally {

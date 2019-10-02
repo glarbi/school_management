@@ -37,6 +37,7 @@
 				<div id="content">
 
 					<%
+						Integer year_start = 2018;
 						Integer day_begin = 1;
 						Integer month_begin = 1;
 						Integer year_begin = 2018;
@@ -54,9 +55,9 @@
 
 						List<Integer> yearList = new ArrayList<Integer>();
 						for (int i = 0; i < 30; i++)
-							yearList.add(i, Integer.valueOf(i + year_begin));
+							yearList.add(i, Integer.valueOf(i + year_start));
 
-						PERSONNE myPersonne = new PERSONNE("_", "_", "_", "01/01/"+year_begin, "_", "_", "_", "01/01/"+year_begin);
+						PERSONNE myPersonne = new PERSONNE("_", "_", "_", "01/01/"+year_start, "_", "_", "_", "01/01/"+year_start);
 						String idStr = request.getParameter("ID");
 						Integer idInt = null;
 						if (idStr == null)
@@ -104,8 +105,8 @@
 						if (tmp != null)
 							year_end = Integer.valueOf(tmp);
 
-						if (!(day_begin.equals(1) && month_begin.equals(1) && year_begin.equals(2018) && day_end.equals(1) && month_end.equals(1)
-								&& year_end.equals(2018))) {
+						if (!(day_begin.equals(1) && month_begin.equals(1) && year_begin.equals(year_start) && day_end.equals(1) && month_end.equals(1)
+								&& year_end.equals(year_start))) {
 							DBManager.set_ASSURANCE(idInt,
 									year_begin.toString() + "/" + month_begin.toString() + "/" + day_begin.toString(),
 									year_end.toString() + "/" + month_end.toString() + "/" + day_end.toString());
@@ -243,11 +244,11 @@
 											for (int i = 0; i < yearList.size(); i++) {
 												if (year_begin.equals(yearList.get(i))) {
 										%>
-										<option value=<%=year_begin + i%> selected><%=yearList.get(i)%></option>
+										<option value=<%=year_start + i%> selected><%=yearList.get(i)%></option>
 										<%
 											} else {
 										%>
-										<option value=<%=year_begin + i%>><%=yearList.get(i)%></option>
+										<option value=<%=year_start + i%>><%=yearList.get(i)%></option>
 										<%
 											}
 											}
@@ -292,11 +293,11 @@
 											for (int i = 0; i < yearList.size(); i++) {
 												if (year_end.equals(yearList.get(i))) {
 										%>
-										<option value=<%=year_begin + i%> selected><%=yearList.get(i)%></option>
+										<option value=<%=year_start + i%> selected><%=yearList.get(i)%></option>
 										<%
 											} else {
 										%>
-										<option value=<%=year_begin + i%>><%=yearList.get(i)%></option>
+										<option value=<%=year_start + i%>><%=yearList.get(i)%></option>
 										<%
 											}
 											}

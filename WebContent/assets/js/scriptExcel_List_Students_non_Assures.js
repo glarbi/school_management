@@ -3,7 +3,7 @@ excel_Students_non_Assures.set( {sheet:0,value:"Liste des élèves" } );
 var evenRow = excel_Students_non_Assures.addStyle( { border: "none,none,none,thin #333333" });
 var oddRow = excel_Students_non_Assures.addStyle ( { fill: "#ECECEC", border: "none,none,none,thin #333333" });
  
-var headers=["Identifiant", "Nom", "Prénom", "Date de naissance", "Depuis", "Jusqu'au"];
+var headers=["Identifiant", "Nom", "Prénom", "Date de naissance", "Niveau scolaire", "Depuis", "Jusqu'au"];
 var formatHeader = excel_Students_non_Assures.addStyle ( {
     border: "none,none,none,thin #333333", font: "Calibri 12 #0000AA B"}
 );

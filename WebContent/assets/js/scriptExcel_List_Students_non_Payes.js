@@ -3,7 +3,7 @@ excel_Students_non_Payes.set( {sheet:0,value:"Liste des élèves" } );
 var evenRow = excel_Students_non_Payes.addStyle( { border: "none,none,none,thin #333333" });
 var oddRow = excel_Students_non_Payes.addStyle ( { fill: "#ECECEC", border: "none,none,none,thin #333333" });
  
-var headers=["Identifiant", "Nom", "Prénom"];
+var headers=["Identifiant", "Nom", "Prénom", "Niveau scolaire"];
 var formatHeader = excel_Students_non_Payes.addStyle ( {
     border: "none,none,none,thin #333333", font: "Calibri 12 #0000AA B"}
 );

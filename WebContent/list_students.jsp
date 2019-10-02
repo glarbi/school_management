@@ -56,7 +56,7 @@
 					<br />
 					<input type="button" id="exportbtn" value="Exporter la liste" onclick="download_Students('Liste_Eleves.xlsx');" />
 					<script src="assets/js/myScripts.js"></script>
-					<script src="assets/js/scriptExcel_Liste_Students.js"></script>
+					<script src="assets/js/scriptExcel_List_Students.js"></script>
 					<br /> <br />
 
 					<table border="1">
@@ -79,22 +79,24 @@
 							<!-- case 6 -->
 							<th>Lieu de naissance</th>
 							<!-- case 7 -->
-							<th>Prénom du père</th>
+							<th>Niveau scolaire</th>
 							<!-- case 8 -->
-							<th>Profession du père</th>
+							<th>Prénom du père</th>
 							<!-- case 9 -->
-							<th>Nom de la mère</th>
+							<th>Profession du père</th>
 							<!-- case 10 -->
-							<th>Prénom de la mère</th>
+							<th>Nom de la mère</th>
 							<!-- case 11 -->
-							<th>Profession de la mère</th>
+							<th>Prénom de la mère</th>
 							<!-- case 12 -->
-							<th>Adresse</th>
+							<th>Profession de la mère</th>
 							<!-- case 13 -->
-							<th>Téléphone</th>
+							<th>Adresse</th>
 							<!-- case 14 -->
-							<th>Date d'inscription</th>
+							<th>Téléphone</th>
 							<!-- case 15 -->
+							<th>Date d'inscription</th>
+							<!-- case 16 -->
 						</tr>
 						<%
 							STUDENT myStudent = new STUDENT();
@@ -140,6 +142,7 @@
 								myStudent.PRENOM = ligne1.get(2).toString();
 								myStudent.DATE_NAIS = ligne1.get(3).toString();
 								myStudent.LIEU_NAIS = ligne1.get(4).toString();
+								myStudent.schoolLevel = ligne1.get(13).toString();
 								myStudent.prenomPere = ligne1.get(5).toString();
 								myStudent.profPere = ligne1.get(6).toString();
 								myStudent.nomMere = ligne1.get(7).toString();
@@ -200,22 +203,24 @@
 							<!-- case 6 -->
 							<th><%=myStudent.LIEU_NAIS%></th>
 							<!-- case 7 -->
-							<th><%=myStudent.prenomPere%></th>
+							<th><%=myStudent.schoolLevel%></th>
 							<!-- case 8 -->
-							<th><%=myStudent.profPere%></th>
+							<th><%=myStudent.prenomPere%></th>
 							<!-- case 9 -->
-							<th><%=myStudent.nomMere%></th>
+							<th><%=myStudent.profPere%></th>
 							<!-- case 10 -->
-							<th><%=myStudent.prenomMere%></th>
+							<th><%=myStudent.nomMere%></th>
 							<!-- case 11 -->
-							<th><%=myStudent.profMere%></th>
+							<th><%=myStudent.prenomMere%></th>
 							<!-- case 12 -->
-							<th><%=myStudent.ADRESSE%></th>
+							<th><%=myStudent.profMere%></th>
 							<!-- case 13 -->
-							<th><%=myStudent.NUM_TEL%></th>
+							<th><%=myStudent.ADRESSE%></th>
 							<!-- case 14 -->
-							<th><%=myStudent.DATE_INSCRIPTION%></th>
+							<th><%=myStudent.NUM_TEL%></th>
 							<!-- case 15 -->
+							<th><%=myStudent.DATE_INSCRIPTION%></th>
+							<!-- case 16 -->
 						</tr>
 						<script>
 						excel_Students.set(0,0,<%=i%>+1,"<%=myStudent.ID%>");
@@ -225,14 +230,15 @@
 						excel_Students.set(0,4,<%=i%>+1,"<%=assuranceToExcel%>");
 						excel_Students.set(0,5,<%=i%>+1,"<%=myStudent.DATE_NAIS%>");
 						excel_Students.set(0,6,<%=i%>+1,"<%=myStudent.LIEU_NAIS%>");
-						excel_Students.set(0,7,<%=i%>+1,"<%=myStudent.prenomPere%>");
-						excel_Students.set(0,8,<%=i%>+1,"<%=myStudent.profPere%>");
-						excel_Students.set(0,9,<%=i%>+1,"<%=myStudent.nomMere%>");
-						excel_Students.set(0,10,<%=i%>+1,"<%=myStudent.prenomMere%>");
-						excel_Students.set(0,11,<%=i%>+1,"<%=myStudent.profMere%>");
-						excel_Students.set(0,12,<%=i%>+1,"<%=myStudent.ADRESSE%>");
-						excel_Students.set(0,13,<%=i%>+1,"<%=myStudent.NUM_TEL%>");
-						excel_Students.set(0,14,<%=i%>+1,"<%=myStudent.DATE_INSCRIPTION%>");
+						excel_Students.set(0,7,<%=i%>+1,"<%=myStudent.schoolLevel%>");
+						excel_Students.set(0,8,<%=i%>+1,"<%=myStudent.prenomPere%>");
+						excel_Students.set(0,9,<%=i%>+1,"<%=myStudent.profPere%>");
+						excel_Students.set(0,10,<%=i%>+1,"<%=myStudent.nomMere%>");
+						excel_Students.set(0,11,<%=i%>+1,"<%=myStudent.prenomMere%>");
+						excel_Students.set(0,12,<%=i%>+1,"<%=myStudent.profMere%>");
+						excel_Students.set(0,13,<%=i%>+1,"<%=myStudent.ADRESSE%>");
+						excel_Students.set(0,14,<%=i%>+1,"<%=myStudent.NUM_TEL%>");
+						excel_Students.set(0,15,<%=i%>+1,"<%=myStudent.DATE_INSCRIPTION%>");
 						</script>
 						<%
 							}
