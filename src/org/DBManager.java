@@ -1,11 +1,14 @@
 package org;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 
+import javax.annotation.Resource;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -18,6 +21,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.Properties;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
@@ -915,8 +920,16 @@ System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
 		return 0;
 	}
 	
+	
 	public static void init_PAIEMENT(Integer id) {
-		int school_year = getYearFromConfig("..\\standalone\\deployments\\school_management.ear\\school_managementWeb.war\\config.xml");
+		String baseDir = System.getProperty("jboss.server.base.dir");
+
+		String appDir = baseDir+"\\deployments\\"+(new TOOLS()).getAppName()+".war\\config.xml";
+System.out.println("init_PAIEMENT1 : myDir="+appDir);
+
+		int school_year = getYearFromConfig(appDir);
+//Afficher myRequest
+System.out.println("init_PAIEMENT1 : school_year="+school_year);
 		Connection con = getConnection();
 		if (con != null) {
 			try {
@@ -927,13 +940,20 @@ System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
 					{
 						myRequest = "UPDATE PAIEMENT SET MONTANT=-1.00 WHERE ID="+id.toString();
 //Afficher myRequest
-System.out.println("init_PAIEMENT : "+myRequest);
+System.out.println("init_PAIEMENT2 : "+myRequest);
 						pStmt = con.prepareStatement(myRequest);
 						pStmt.executeUpdate();
 						pStmt.close();
 					}
 					else
 					{
+						myRequest = "INSERT INTO PAIEMENT (ID,MOIS,MONTANT) VALUES ("+id.toString()+",'"+school_year+"/09/01',-1.00)";
+//Afficher myRequest
+System.out.println("init_PAIEMENT3 : "+myRequest);
+						pStmt = con.prepareStatement(myRequest);
+						pStmt.executeUpdate();
+						pStmt.close();
+						
 						myRequest = "INSERT INTO PAIEMENT (ID,MOIS,MONTANT) VALUES ("+id.toString()+",'"+school_year+"/10/01',-1.00)";
 //Afficher myRequest
 System.out.println("init_PAIEMENT : "+myRequest);

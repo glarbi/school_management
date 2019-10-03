@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<web-app xmlns="http://geronimo.apache.org/xml/ns/j2ee/web-1.1">
+    <environment>
+        <moduleId>
+            <groupId>default</groupId>
+            <artifactId>SMWeb</artifactId>
+            <version>1.0</version>
+            <type>car</type>
+        </moduleId>
+        <dependencies>
+            <dependency>
+                <groupId>console.dbpool</groupId>
+                <artifactId>SMPool</artifactId>
+            </dependency>
+        </dependencies>
+    </environment>
+    <context-root>/SMWeb</context-root>
+    <resource-ref>
+        <ref-name>jdbc/SMDB</ref-name>
+        <resource-link>SMPool</resource-link>
+    </resource-ref>
+</web-app>
