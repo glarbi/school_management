@@ -53,7 +53,7 @@
 						</tr>
 						<%
 							STUDENT myStudent = null;
-							ArrayList<Object> students = DBManager.getSTUDENT_non_payes();
+							ArrayList<Object> students = DBManager.getSTUDENTS_non_payes();
 							int studentsSize = students.size();
 						%>
 							<script>
@@ -63,7 +63,7 @@
 							for (int i = 0; i < students.size(); i++) {
 								myStudent = DBManager.getSTUDENT((Integer) (students.get(i)));
 
-								String link_student_paiement = "paiement.jsp?ID=" + myStudent.ID;
+								String link_student_paiement = "paiement_student.jsp?ID=" + myStudent.ID;
 						%>
 						<tr>
 							<!-- ligne i -->

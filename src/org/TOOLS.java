@@ -12,7 +12,7 @@ public class TOOLS {
 		try {
 			initialContext = new InitialContext();
 			myApplicationName = (String) initialContext.lookup("java:app/AppName");
-System.out.println("init_PAIEMENT1 : ApplicationName="+myApplicationName);
+System.out.println("getAppName : ApplicationName="+myApplicationName);
 		} catch (NamingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -26,7 +26,7 @@ System.out.println("init_PAIEMENT1 : ApplicationName="+myApplicationName);
 		try {
 			initialContext = new InitialContext();
 			myModuleName = (String) initialContext.lookup("java:module/ModuleName");
-System.out.println("init_PAIEMENT1 : ModuleName="+myModuleName);
+System.out.println("getModuleName : ModuleName="+myModuleName);
 		} catch (NamingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

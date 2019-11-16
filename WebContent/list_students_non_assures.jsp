@@ -64,7 +64,13 @@
 							String debut = "";
 							String fin = "";
 							students = DBManager.getSTUDENT_non_assures();
-							for (int i = 0; i < students.size(); i++) {
+							int studentsSize = students.size();
+						%>
+							<script>
+							for (var i=1;i < <%=studentsSize%>;i++) excel_Students_non_Assures.set({row:i, style: i%2==0 ? evenRow: oddRow  });
+							</script>
+						<%
+							for (int i = 0; i < studentsSize; i++) {
 								ligne1 = students.get(i);
 								myStudent = DBManager.getSTUDENT(Integer.valueOf(ligne1.get(0).toString()));
 								debut = ligne1.get(1).toString();
@@ -80,7 +86,7 @@
 									else
 										assurance = "<font color=\"red\">Non assuré</font>";
 								} catch (java.lang.NumberFormatException e) {
-									System.out.println("Exception : " + e.getMessage());
+									e.printStackTrace();
 								}
 						%>
 						<tr>
@@ -99,12 +105,12 @@
 							<!-- case 6 -->
 						</tr>
 						<script>
-						excel_Athletes_non_Assures.set(0,0,<%=i%>+1,"<%=myStudent.ID%>");
-						excel_Athletes_non_Assures.set(0,1,<%=i%>+1,"<%=myStudent.NOM%>");
-						excel_Athletes_non_Assures.set(0,2,<%=i%>+1,"<%=myStudent.PRENOM%>");
-						excel_Athletes_non_Assures.set(0,3,<%=i%>+1,"<%=myStudent.DATE_NAIS%>");
-						excel_Athletes_non_Assures.set(0,4,<%=i%>+1,"<%=debut%>");
-						excel_Athletes_non_Assures.set(0,5,<%=i%>+1,"<%=fin%>");
+						excel_Students_non_Assures.set(0,0,<%=i%>+1,"<%=myStudent.ID%>");
+						excel_Students_non_Assures.set(0,1,<%=i%>+1,"<%=myStudent.NOM%>");
+						excel_Students_non_Assures.set(0,2,<%=i%>+1,"<%=myStudent.PRENOM%>");
+						excel_Students_non_Assures.set(0,3,<%=i%>+1,"<%=myStudent.DATE_NAIS%>");
+						excel_Students_non_Assures.set(0,4,<%=i%>+1,"<%=debut%>");
+						excel_Students_non_Assures.set(0,5,<%=i%>+1,"<%=fin%>");
 						</script>
 						<%
 							}

@@ -77,7 +77,7 @@
 									else
 										assurance = "<font color=\"red\">Non assuré</font>";
 								} catch (java.lang.NumberFormatException e) {
-									System.out.println("Exception : " + e.getMessage());
+									e.printStackTrace();
 								}
 						%>
 						<tr>

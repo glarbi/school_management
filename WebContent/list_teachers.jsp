@@ -84,6 +84,8 @@
 							<!-- case 9 -->
 							<th>Date d'inscription</th>
 							<!-- case 10 -->
+							<th>Matières enseignées</th>
+							<!-- case 11 -->
 						</tr>
 						<%
 							TEACHER myTeacher = new TEACHER();
@@ -111,7 +113,7 @@
 								try {
 									teachers = DBManager.getTEACHER(Integer.parseInt(myTeacher.ID), myTeacher.NOM, myTeacher.PRENOM);
 								} catch (java.lang.NumberFormatException e) {
-									System.out.println("Exception : " + e.getMessage());
+									e.printStackTrace();
 								}
 							}
 							int teachersSize = teachers.size();
@@ -131,9 +133,17 @@
 								myTeacher.ADRESSE = ligne1.get(5).toString();
 								myTeacher.NUM_TEL = ligne1.get(6).toString();
 								myTeacher.DATE_INSCRIPTION = ligne1.get(7).toString();
+								
+								Integer teacherIdInt = Integer.parseInt(myTeacher.ID);
+								String link_teacher_subject = "";
+								ArrayList<SUBJECT> mySubjects = DBManager.getSUBJECT_by_Teacher(teacherIdInt);
+								for (int j=0; j<mySubjects.size(); j++) {
+									LEVEL myLevel = DBManager.getLEVEL_by_ID(mySubjects.get(j).idlevel);
+									link_teacher_subject = link_teacher_subject.concat("<a href=teacher_subject.jsp?idTeacher="+teacherIdInt+"&idSubject="+ mySubjects.get(j).idsubject+">"+mySubjects.get(j).title+" "+myLevel.levelTitle+"</a><br>");
+								}
 
 								String link_teacher = "teacher.jsp?ID=" + myTeacher.ID;
-								String link_teacher_paiement = "paiement.jsp?ID=" + myTeacher.ID;
+								String link_teacher_paiement = "paiement_teacher.jsp?ID=" + myTeacher.ID;
 								String link_teacher_assurance = "assurance.jsp?ID=" + myTeacher.ID;
 
 								LocalDate d = LocalDate.now();
@@ -143,7 +153,16 @@
 								String paiementToExcel = "";
 								try {
 									String date = d.format(formatter);
-									if (DBManager.check_PAIEMENT(Integer.parseInt(myTeacher.ID), date + "01")) {
+									ArrayList<SUBJECT> subjects = DBManager.getSUBJECT_by_Teacher(teacherIdInt);
+									boolean isOK = true;
+									int j=0, subjectsSize = subjects.size();
+									while (isOK && j<subjectsSize) {
+										SUBJECT myReg = subjects.get(j);
+										if (!DBManager.check_PAIEMENT_TEACHER(teacherIdInt, myReg.idsubject, date+"01")) isOK = false;
+										j++;
+									}
+
+									if (isOK) {
 										paiement = "OK";
 										paiementToExcel = "OK";
 									} else {
@@ -151,7 +170,7 @@
 										paiementToExcel = "no OK";
 									}
 								} catch (java.lang.NumberFormatException e) {
-									System.out.println("Exception : " + e.getMessage());
+									e.printStackTrace();
 								}
 								String assurance = "";
 								String assuranceToExcel = "";
@@ -164,7 +183,7 @@
 										assuranceToExcel = "no OK";
 									}
 								} catch (java.lang.NumberFormatException e) {
-									System.out.println("Exception : " + e.getMessage());
+									e.printStackTrace();
 								}
 						%>
 						<tr>
@@ -175,22 +194,22 @@
 							<!-- case 2 -->
 							<th><%=myTeacher.PRENOM%></th>
 							<!-- case 3 -->
-							<th><a href=<%=link_teacher_paiement%>><%=paiement%></a>
-							</th>
+							<th><a href=<%=link_teacher_paiement%>><%=paiement%></a></th>
 							<!-- case 4 -->
-							<th><a href=<%=link_teacher_assurance%>><%=assurance%></a>
-							</th>
+							<th><a href=<%=link_teacher_assurance%>><%=assurance%></a></th>
 							<!-- case 5 -->
 							<th><%=myTeacher.DATE_NAIS%></th>
-							<!-- case 4 -->
-							<th><%=myTeacher.LIEU_NAIS%></th>
-							<!-- case 5 -->
-							<th><%=myTeacher.ADRESSE%></th>
 							<!-- case 6 -->
-							<th><%=myTeacher.NUM_TEL%></th>
+							<th><%=myTeacher.LIEU_NAIS%></th>
 							<!-- case 7 -->
-							<th><%=myTeacher.DATE_INSCRIPTION%></th>
+							<th><%=myTeacher.ADRESSE%></th>
 							<!-- case 8 -->
+							<th><%=myTeacher.NUM_TEL%></th>
+							<!-- case 9 -->
+							<th><%=myTeacher.DATE_INSCRIPTION%></th>
+							<!-- case 10 -->
+							<th><%=link_teacher_subject%></th>
+							<!-- case 11 -->
 						</tr>
 						<script>
 						excel_Teachers.set(0,0,<%=i%>+1,"<%=myTeacher.ID%>");
@@ -203,7 +222,8 @@
 						excel_Teachers.set(0,7,<%=i%>+1,"<%=myTeacher.ADRESSE%>");
 						excel_Teachers.set(0,8,<%=i%>+1,"<%=myTeacher.NUM_TEL%>");
 						excel_Teachers.set(0,9,<%=i%>+1,"<%=myTeacher.DATE_INSCRIPTION%>");
-	    				</script>
+						excel_Teachers.set(0,10,<%=i%>+1,"matières");
+						</script>
 						<%
 							}
 						%>

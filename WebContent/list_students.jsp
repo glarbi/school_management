@@ -54,7 +54,8 @@
 					</form>
 
 					<br />
-					<input type="button" id="exportbtn" value="Exporter la liste" onclick="download_Students('Liste_Eleves.xlsx');" />
+					<input type="button" id="exportbtn" value="Exporter la liste" onclick="download_Students('Liste_Eleves.xlsx');" /> 
+					
 					<script src="assets/js/myScripts.js"></script>
 					<script src="assets/js/scriptExcel_List_Students.js"></script>
 					<br /> <br />
@@ -97,6 +98,8 @@
 							<!-- case 15 -->
 							<th>Date d'inscription</th>
 							<!-- case 16 -->
+							<th>Matières</th>
+							<!-- case 17 -->
 						</tr>
 						<%
 							STUDENT myStudent = new STUDENT();
@@ -124,7 +127,7 @@
 								try {
 									students = DBManager.getSTUDENT(Integer.parseInt(myStudent.ID), myStudent.NOM, myStudent.PRENOM);
 								} catch (java.lang.NumberFormatException e) {
-									System.out.println("Exception : " + e.getMessage());
+									e.printStackTrace();
 								}
 							}
 							int studentsSize = students.size();
@@ -152,18 +155,34 @@
 								myStudent.NUM_TEL = ligne1.get(11).toString();
 								myStudent.DATE_INSCRIPTION = ligne1.get(12).toString();
 
+								Integer studentIdInt = Integer.parseInt(myStudent.ID);
+								String link_subject = "";
+								ArrayList<SUBJECT> mySubjects = DBManager.getSUBJECT_by_Student(studentIdInt);
+								for (int j=0; j<mySubjects.size(); j++) {
+									LEVEL myLevel = DBManager.getLEVEL_by_ID(mySubjects.get(j).idlevel);
+									link_subject = link_subject.concat("<a href=subject.jsp?ID="+ mySubjects.get(j).idsubject+">"+mySubjects.get(j).title+" "+myLevel.levelTitle+"</a><br>");
+								}
+
 								String link_student = "student.jsp?ID=" + myStudent.ID;
-								String link_student_paiement = "paiement.jsp?ID=" + myStudent.ID;
+								String link_student_paiement = "paiement_student.jsp?ID=" + myStudent.ID;
 								String link_student_assurance = "assurance.jsp?ID=" + myStudent.ID;
 
 								LocalDate d = LocalDate.now();
-								DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-");
+								DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
 								String paiement = "";
 								String paiementToExcel = "";
 								try {
 									String date = d.format(formatter);
-									if (DBManager.check_PAIEMENT(Integer.parseInt(myStudent.ID), date + "01")) {
+									ArrayList<REGISTRATION> registrations = DBManager.getRegistrations(Integer.parseInt(myStudent.ID));
+									boolean isOK = true;
+									int j=0, regSize = registrations.size();
+									while (isOK && j<regSize) {
+										REGISTRATION myReg = registrations.get(j);
+										if (!DBManager.check_PAIEMENT(Integer.parseInt(myStudent.ID), myReg.idTeacher, myReg.idSubject, date)) isOK = false;
+										j++;
+									}
+									if (isOK) {
 										paiement = "OK";
 										paiementToExcel = "OK";
 									} else {
@@ -171,7 +190,7 @@
 										paiementToExcel = "no OK";
 									}
 								} catch (java.lang.NumberFormatException e) {
-									System.out.println("Exception : " + e.getMessage());
+									e.printStackTrace();
 								}
 								String assurance = "";
 								String assuranceToExcel = "";
@@ -184,7 +203,7 @@
 										assuranceToExcel = "no OK";
 									}
 								} catch (java.lang.NumberFormatException e) {
-									System.out.println("Exception : " + e.getMessage());
+									e.printStackTrace();
 								}
 						%>
 						<tr>
@@ -221,6 +240,8 @@
 							<!-- case 15 -->
 							<th><%=myStudent.DATE_INSCRIPTION%></th>
 							<!-- case 16 -->
+							<th><%=link_subject%></th>
+							<!-- case 17 -->
 						</tr>
 						<script>
 						excel_Students.set(0,0,<%=i%>+1,"<%=myStudent.ID%>");

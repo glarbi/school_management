@@ -88,20 +88,24 @@
 						String t7 = request.getParameter("Tel");
 						String t8 = year_inscription.toString() + "-" + month_inscription.toString() + "-"
 								+ day_inscription.toString();
-	
+						//String t9 = request.getParameter("IDSubject");
+
 						if ((t1 != null && t2 != null && t3 != null && t5 != null && t6 != null && t7 != null && (!t1.isEmpty()
 								&& !t2.isEmpty() && !t3.isEmpty() && !t5.isEmpty() && !t6.isEmpty() && !t7.isEmpty()))) {
 							try {
 								Integer t1int = Integer.parseInt(t1);
+								//Integer t9int = Integer.parseInt(t9);
 								DBManager.setTEACHER(t1int, t2, t3, t4, t5, t6, t7, t8);
-								t1 = null; //Pour faire entrer un nouveau athlète
+								t1 = null; //Pour faire entrer un nouveau enseignant
 							} catch (java.lang.NumberFormatException e) {
-								System.out.println("Exception : " + e.getMessage());
+								e.printStackTrace();
 							}
 						}
 	
-						if (t1 == null)
+						if (t1 == null) {
 							t1 = DBManager.getFreeTeacherID().toString();
+							//t9 = "1";
+						}
 						//java.util.Date date = new java.util.Date();
 						LocalDate date = LocalDate.now();
 						DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -118,7 +122,7 @@
 							try {
 								idInt = Integer.parseInt(t1);
 							} catch (java.lang.NumberFormatException e) {
-								System.out.println("Exception : " + e.getMessage());
+								e.printStackTrace();
 							}
 						}
 						if (t1 != null) {
@@ -136,7 +140,7 @@
 							}
 						}
 					%>
-					<form name="teacherForm" method="get"
+					<form id="teacherFormId" name="teacherForm" method="get"
 						style="width: 50%; margin: auto; background-color: #c1d9fc; padding-bottom: 15px;">
 						<p align="center">
 						<h2>Informations de l'enseignant</h2>
@@ -148,7 +152,7 @@
 								</th>
 								<th>
 									<p>
-										<input type="text" name="ID" style="color: graytext"
+										<input type="text" id="ID" name="ID" style="color: graytext"
 											value="<%=myTeacher.ID%>" size=25 align="right" />
 									</p>
 								</th>
@@ -323,10 +327,12 @@
 								</th>
 							</tr>
 						</table>
-						<p style="width: 50%; margin: auto;" align="center">
-							<INPUT type="submit" name="OK" value="OK" /> <INPUT type="reset">
+						<p style="width: 100%; margin: auto;" align="center">
+							<INPUT type="submit" name="OK" value="OK" /> <INPUT type="reset"> 
+							<INPUT type="button" id="SuppBtn" value="Supprimer un enseignant" onclick="removeTeacher()" />
 						</p>
 					</form>
+					<div id="Result" style="color:red;"></div>
 					<br />
 					<%
 						if (!myTeacher.ID.equals(DBManager.getFreeTeacherID().toString())) {
@@ -349,5 +355,26 @@
 		<script src="assets/js/breakpoints.min.js"></script>
 		<script src="assets/js/util.js"></script>
 		<script src="assets/js/main.js"></script>
+		<script>
+			function removeTeacher() {
+				var _idteacher = document.getElementById("ID").value;
+				$.ajax({
+					url : "JSONServletRemove",
+					type : "POST",
+					data : {
+						idTeacher : _idteacher
+					},
+					dataType : "json",
+					success : function(result) {
+						document.getElementById("Result").innerHTML = result;
+						document.getElementById("teacherFormId").reset();
+					},
+					error : function(xhr, ajaxOptions, thrownError) {
+						alert(xhr.status);
+						alert(thrownError);
+					}
+				});
+			}
+		</script>
 </body>
 </html>

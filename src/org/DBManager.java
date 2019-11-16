@@ -1,14 +1,12 @@
 package org;
 
 import java.io.File;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 
-import javax.annotation.Resource;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -17,12 +15,8 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.Properties;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
@@ -82,10 +76,45 @@ System.out.println("INFO -- Create table : "+myRequest);
 		}
 
 		try {
-			//Création de la table "STUDENT"
+			//Création de la table "SCHOOL_LEVEL"
 			myRequest = "CREATE TABLE IF NOT EXISTS SCHOOL_LEVEL ("+
-			"ID INTEGER PRIMARY KEY,"+ // Identifiant l'élève (101-infini)
+			"ID INTEGER PRIMARY KEY,"+ // Identifiant du niveau scolaire
 			"LEVEL VARCHAR(30) NOT NULL) ENGINE = InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";
+//Afficher myRequest
+System.out.println("INFO -- Create table : "+myRequest);
+			pStmt = con.prepareStatement(myRequest);
+			pStmt.executeUpdate();
+			pStmt.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			ret = -1;
+		}
+
+		try {
+			//Création de la table "STUDENT_LEVEL"
+			myRequest = "CREATE TABLE IF NOT EXISTS STUDENT_LEVEL ("+
+			"IDSTUDENT INTEGER NOT NULL,"+ // Identifiant du niveau scolaire
+			"IDLEVEL INTEGER NOT NULL,"+
+			"PRIMARY KEY (IDSTUDENT,IDLEVEL)"+
+			"FOREIGN KEY (IDSTUDENT) REFERENCES STUDENT(ID)"+
+			"FOREIGN KEY (IDLEVEL) REFERENCES SCHOOL_LEVEL(ID)) ENGINE = InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";
+//Afficher myRequest
+System.out.println("INFO -- Create table : "+myRequest);
+			pStmt = con.prepareStatement(myRequest);
+			pStmt.executeUpdate();
+			pStmt.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			ret = -1;
+		}
+
+		try {
+			//Création de la table "SUBJECT"
+			myRequest = "CREATE TABLE IF NOT EXISTS SUBJECT ("+
+			"ID INTEGER PRIMARY KEY,"+ // Identifiant de la matière
+			"TITLE VARCHAR(255) NOT NULL,"+
+			"IDLEVEL INTEGER NOT NULL,"+
+			"FOREIGN KEY (IDLEVEL) REFERENCES SCHOOL_LEVEL(ID)) ENGINE = InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";
 //Afficher myRequest
 System.out.println("INFO -- Create table : "+myRequest);
 			pStmt = con.prepareStatement(myRequest);
@@ -106,8 +135,48 @@ System.out.println("INFO -- Create table : "+myRequest);
 			"LIEU_NAIS VARCHAR(30) NOT NULL,"+
 			"ADRESSE VARCHAR(1024) NOT NULL,"+
 			"NUM_TEL VARCHAR(30) NOT NULL,"+
-			"DATE_INSCRIPTION DATE,\"+\r\n" + 
-			"IMG_PATH VARCHAR(1024)) ENGINE = InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";
+			"DATE_INSCRIPTION DATE,"+ 
+			"IMG_PATH VARCHAR(1024),"+
+			"FOREIGN KEY (IDSB) REFERENCES SUBJECT(ID)) ENGINE = InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";
+//Afficher myRequest
+System.out.println("INFO -- Create table : "+myRequest);
+			pStmt = con.prepareStatement(myRequest);
+			pStmt.executeUpdate();
+			pStmt.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			ret = -1;
+		}
+
+		try {
+			//Création de la table "TEACHER_SUBJECT"
+			myRequest = "CREATE TABLE IF NOT EXISTS TEACHER_SUBJECT ("+
+			"IDT INTEGER NOT NULL,"+ // Identifiant enseignant (1-100)
+			"IDSB INTEGER NOT NULL,"+ // Identifiant matière
+			"PRIMARY KEY (IDT,IDSB),"+
+			"FOREIGN KEY (IDT) REFERENCES TEACHER(ID),"+
+			"FOREIGN KEY (IDSB) REFERENCES SUBJECT(ID)) ENGINE = InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";
+//Afficher myRequest
+System.out.println("INFO -- Create table : "+myRequest);
+			pStmt = con.prepareStatement(myRequest);
+			pStmt.executeUpdate();
+			pStmt.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			ret = -1;
+		}
+
+		try {
+			//Création de la table "REGISTRATION"
+			myRequest = "CREATE TABLE IF NOT EXISTS REGISTRATION ("+
+			"IDSTUDENT INTEGER NOT NULL,"+ // Identifiant de l'étudiant (100-infini)
+			"IDTEACHER INTEGER NOT NULL,"+ // Identifiant de l'enseignant (1-100)
+			"IDSUBJECT INTEGER NOT NULL,"+
+			"DATE_REG DATE,"+
+			"PRIMARY KEY (IDSTUDENT,IDTEACHER,IDSUBJECT),"+
+			"FOREIGN KEY (IDSTUDENT) REFERENCES STUDENT(ID),"+
+			"FOREIGN KEY (IDTEACHER) REFERENCES TEACHER(ID),"+
+			"FOREIGN KEY (IDSUBJECT) REFERENCES SUBJECT(ID)) ENGINE = InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";
 //Afficher myRequest
 System.out.println("INFO -- Create table : "+myRequest);
 			pStmt = con.prepareStatement(myRequest);
@@ -121,10 +190,36 @@ System.out.println("INFO -- Create table : "+myRequest);
 		try {
 			//Création de la table "PAIEMENT"
 			myRequest = "CREATE TABLE IF NOT EXISTS PAIEMENT ("+
-			"ID INTEGER,"+ // 1<ID<=100 (TEACHER) /   ID>100 (STUDENT)
+			"ID INTEGER,"+ // ID>100 (STUDENT)
+			"IDTEACHER INTEGER,"+
+			"IDSUBJECT INTEGER,"+
+			"DEBUT DATE,"+
+			"FIN DATE,"+
+			"MONTANT DECIMAL(8,2),"+ //8 chiffres dont 2 aprés la virgule
+			"PRIMARY KEY (ID,IDTEACHER,IDSUBJECT,DEBUT),"+
+			"FOREIGN KEY (ID) REFERENCES STUDENT(ID),"+
+			"FOREIGN KEY (IDTEACHER) REFERENCES TEACHER(ID),"+
+			"FOREIGN KEY (IDSUBJECT) REFERENCES SUBJECT(ID)) ENGINE = InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";
+//Afficher myRequest
+System.out.println("INFO -- Create table : "+myRequest);
+			pStmt = con.prepareStatement(myRequest);
+			pStmt.executeUpdate();
+			pStmt.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			ret = -1;
+		}
+
+		try {
+			//Création de la table "PAIEMENT_TEACHER"
+			myRequest = "CREATE TABLE IF NOT EXISTS PAIEMENT_TEACHER ("+
+			"ID INTEGER PRIMARY KEY,"+
+			"IDTEACHER INTEGER,"+ // 1<ID<=100 (TEACHER)
+			"IDSUBJECT INTEGER,"+
 			"MOIS DATE,"+
 			"MONTANT DECIMAL(8,2),"+ //8 chiffres dont 2 aprés la virgule
-			"PRIMARY KEY (ID,MOIS)) ENGINE = InnoDB";
+			"FOREIGN KEY (IDTEACHER) REFERENCES TEACHER(ID),"+
+			"FOREIGN KEY (IDSUBJECT) REFERENCES SUBJECT(ID)) ENGINE = InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";
 //Afficher myRequest
 System.out.println("INFO -- Create table : "+myRequest);
 			pStmt = con.prepareStatement(myRequest);
@@ -140,7 +235,8 @@ System.out.println("INFO -- Create table : "+myRequest);
 			myRequest = "CREATE TABLE IF NOT EXISTS ASSURANCE ("+
 			"ID INTEGER PRIMARY KEY,"+ // 1<ID<=100 (TEACHER) /   ID>100 (STUDENT)
 			"debut DATE,"+
-			"fin DATE) ENGINE = InnoDB";
+			"fin DATE,"+
+			"FOREIGN KEY (ID) REFERENCES STUDENT(ID)) ENGINE = InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";
 //Afficher myRequest
 System.out.println("INFO -- Create table : "+myRequest);
 			pStmt = con.prepareStatement(myRequest);
@@ -161,8 +257,8 @@ System.out.println("INFO -- Create table : "+myRequest);
 		return ret;
 	}
 	
-	public static void setSTUDENT(Integer id, String nom, String prenom, String dateNais, String lieuNais,
-			String sLevel, String prenomPere, String profPere, String nomMere, String prenomMere, String profMere,
+	public static void setSTUDENT(Integer id, Integer idLev, String nom, String prenom, String dateNais, String lieuNais,
+			String prenomPere, String profPere, String nomMere, String prenomMere, String profMere,
 			String adresse, String tel, String dateInscription)
 	{
 		if (id.intValue() > 0) {
@@ -170,7 +266,7 @@ System.out.println("INFO -- Create table : "+myRequest);
 			if (prenom == null) prenom = "";
 			if (dateNais == null) dateNais = "01/01/2000";
 			if (lieuNais == null) lieuNais = "";
-			if (sLevel == null) sLevel = "";
+			if (idLev == null) idLev = 0;
 			if (prenomPere == null) prenomPere = "";
 			if (profPere == null) profPere = "";
 			if (nomMere == null) nomMere = "";
@@ -218,21 +314,16 @@ System.out.println("setSTUDENT3 : "+myRequest);
 					pStmt = con.prepareStatement(myRequest);
 					pStmt.executeUpdate();
 					pStmt.close();
-
-					//Initialisation de l'assurance
-					init_ASSURANCE(id);
-					//Initialisation du paiement
-					init_PAIEMENT(id);
 				}
 
-				myRequest = "SELECT * FROM SCHOOL_LEVEL WHERE ID=" + id.toString();
+				myRequest = "SELECT * FROM STUDENT_LEVEL WHERE IDSTUDENT=" + id.toString();
 //Afficher myRequest
 System.out.println("setSTUDENT4 : "+myRequest);
 				pStmt = con.prepareStatement(myRequest);
 				rs = pStmt.executeQuery();
 				if ( rs.next() ) {
 					pStmt.close();
-					myRequest = "UPDATE SCHOOL_LEVEL SET level='" + sLevel + "' WHERE ID=" + id.toString();
+					myRequest = "UPDATE STUDENT_LEVEL SET IDLEVEL='" + idLev + "' WHERE IDSTUDENT=" + id.toString();
 //Afficher myRequest
 System.out.println("setSTUDENT5 : "+myRequest);
 					pStmt = con.prepareStatement(myRequest);
@@ -241,7 +332,7 @@ System.out.println("setSTUDENT5 : "+myRequest);
 				}
 				else {
 					pStmt.close();
-					myRequest = "INSERT INTO SCHOOL_LEVEL (ID,LEVEL) VALUES (" + id + ",'" + sLevel + "')";
+					myRequest = "INSERT INTO STUDENT_LEVEL (IDSTUDENT,IDLEVEL) VALUES (" + id + ",'" + idLev + "')";
 //Afficher myRequest
 System.out.println("setSTUDENT6 : " + myRequest);
 					pStmt = con.prepareStatement(myRequest);
@@ -306,10 +397,6 @@ System.out.println("setTEACHER3 : "+myRequest);
 					pStmt = con.prepareStatement(myRequest);
 					pStmt.executeUpdate();
 					pStmt.close();
-					//Initialisation de l'assurance
-					init_ASSURANCE(id);
-					//Initialisation du paiement
-					init_PAIEMENT(id);
 				}
 			} catch (SQLException e) {
 				e.printStackTrace();
@@ -325,6 +412,198 @@ System.out.println("setTEACHER3 : "+myRequest);
 		}		
 	}
 	
+	public static void setTeacherSubject(String nom, String prenom, String subjectLevel)
+	{
+		if (nom == null) nom = "";
+		if (prenom == null) prenom = "";
+		if (subjectLevel == null) subjectLevel = "";
+		if (!nom.isEmpty() && !prenom.isEmpty() && !subjectLevel.isEmpty()) {
+			String[] splitted = subjectLevel.split(" ");
+			Integer idSubject = getIDSujectbyTitleLevel(splitted);
+			TEACHER myTeacher = getTEACHERbyName(nom, prenom);
+			Connection con = getConnection();
+			try {
+				String myRequest = "SELECT * FROM TEACHER_SUBJECT WHERE IDT=" + myTeacher.ID + " AND IDSB=" + idSubject;
+//Afficher myRequest
+System.out.println("setTeacherSubject : "+myRequest);
+				PreparedStatement pStmt = con.prepareStatement(myRequest);
+				ResultSet rs = pStmt.executeQuery();
+				if ( !rs.next() ) {
+					pStmt.close();
+					myRequest = "INSERT INTO TEACHER_SUBJECT (IDT,IDSB) VALUES ("+myTeacher.ID+","+idSubject+")";
+//Afficher myRequest
+System.out.println("setTeacherSubject : "+myRequest);
+					pStmt = con.prepareStatement(myRequest);
+					pStmt.executeUpdate();
+					pStmt.close();
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+	}
+	
+	public static void setSubject(Integer id, String title, Integer idLevel)
+	{
+		if (id!=null && id>0 && !title.isEmpty() && idLevel!=null && idLevel>0) {
+			Connection con = getConnection();
+			try {
+				String myRequest = "SELECT * FROM SUBJECT WHERE ID=" + id;
+//Afficher myRequest
+System.out.println("setSubject1 : "+myRequest);
+				PreparedStatement pStmt = con.prepareStatement(myRequest);
+				ResultSet rs = pStmt.executeQuery();
+				if ( !rs.next() ) {
+					pStmt.close();
+					myRequest = "INSERT INTO SUBJECT (ID,TITLE,IDLEVEL) VALUES ("+id+",'"+title+"',"+idLevel+")";
+//Afficher myRequest
+System.out.println("setSubject2 : "+myRequest);
+					pStmt = con.prepareStatement(myRequest);
+					pStmt.executeUpdate();
+					pStmt.close();
+				} else {
+					pStmt.close();
+					myRequest = "UPDATE SUBJECT SET TITLE='"+title+"', IDLEVEL="+idLevel+" WHERE ID="+id;
+//Afficher myRequest
+System.out.println("setSubject3 : "+myRequest);
+					pStmt = con.prepareStatement(myRequest);
+					pStmt.executeUpdate();
+					pStmt.close();
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+	}
+
+	public static void setLevel(Integer id, String levelTitle)
+	{
+		if (id!=null && id>0 && !levelTitle.isEmpty()) {
+			Connection con = getConnection();
+			try {
+				String myRequest = "SELECT * FROM SCHOOL_LEVEL WHERE ID=" + id;
+//Afficher myRequest
+System.out.println("setLevel1 : "+myRequest);
+				PreparedStatement pStmt = con.prepareStatement(myRequest);
+				ResultSet rs = pStmt.executeQuery();
+				if ( !rs.next() ) {
+					pStmt.close();
+					myRequest = "INSERT INTO SCHOOL_LEVEL (ID,level) VALUES ("+id+",'"+levelTitle+"')";
+//Afficher myRequest
+System.out.println("setLevel2 : "+myRequest);
+					pStmt = con.prepareStatement(myRequest);
+					pStmt.executeUpdate();
+					pStmt.close();
+				} else {
+					pStmt.close();
+					myRequest = "UPDATE SCHOOL_LEVEL SET level='"+levelTitle+"' WHERE ID="+id;
+//Afficher myRequest
+System.out.println("setLevel3 : "+myRequest);
+					pStmt = con.prepareStatement(myRequest);
+					pStmt.executeUpdate();
+					pStmt.close();
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+	}
+
+	public static void setRegistration(Integer idStudent, Integer idTeacher, Integer idSubject, String regDate)
+	{
+		if (idStudent>100 && idTeacher>0 && idTeacher<=100 && idSubject>0 && regDate!=null && !regDate.isEmpty()) {
+			Connection con = getConnection();
+			try {
+				String myRequest = "SELECT * FROM REGISTRATION WHERE IDSTUDENT=" + idStudent +
+						" AND IDTEACHER=" + idTeacher + " AND IDSUBJECT=" + idSubject;
+//Afficher myRequest
+System.out.println("setRegistration1 : "+myRequest);
+				PreparedStatement pStmt = con.prepareStatement(myRequest);
+				ResultSet rs = pStmt.executeQuery();
+				if ( !rs.next() ) {
+					pStmt.close();
+					myRequest = "INSERT INTO REGISTRATION (IDSTUDENT,IDTEACHER,IDSUBJECT,DATE_REG) VALUES ("+idStudent+","+idTeacher+","+idSubject+",'"+regDate+"')";
+//Afficher myRequest
+System.out.println("setRegistration2 : "+myRequest);
+					pStmt = con.prepareStatement(myRequest);
+					pStmt.executeUpdate();
+					pStmt.close();
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+	}
+
+	public static ArrayList<REGISTRATION> getRegistrations(Integer idStudent) {
+		ArrayList<REGISTRATION> registrations = new ArrayList<REGISTRATION>();
+
+		Connection con = getConnection();
+		if (con != null) {
+			try {
+				String myRequest = "";
+				myRequest = "SELECT * FROM REGISTRATION WHERE IDSTUDENT="+idStudent.toString();
+//Afficher myRequest
+System.out.println("getRegistrations : " + myRequest);
+
+				PreparedStatement pStmt = con.prepareStatement(myRequest);
+				ResultSet rs = pStmt.executeQuery();
+				int j = 0;
+				while (rs.next()) {
+					REGISTRATION registration = new REGISTRATION(rs.getInt("IDSTUDENT"),
+							rs.getInt("IDTEACHER"), rs.getInt("IDSUBJECT"), rs.getDate("DATE_REG").toString());
+
+					registrations.add(j, registration);
+					j++;
+				}
+				pStmt.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		return registrations;
+	}
+
 	public static Integer getFreeStudentID(){
 		int max = 100;
 		Connection con = getConnection();
@@ -332,17 +611,13 @@ System.out.println("setTEACHER3 : "+myRequest);
 			return -1;
 		} else {
 			try {
-				String myRequest = "SELECT MAX(ID) AS MYID FROM STUDENT";//"SELECT * FROM STUDENT";
+				String myRequest = "SELECT MAX(ID) AS MYID FROM STUDENT";
 				PreparedStatement pStmt = con.prepareStatement(myRequest);
 				ResultSet rs = pStmt.executeQuery();
 				if (rs.next()) {
 					max = rs.getInt("MYID");
 					if (max == 0) max = 100; // cas où MYID == NULL getInt retourne 0 !!!
 				}
-				/*while (rs.next()) {
-					Integer _id = rs.getInt("ID");
-					if (_id > max) max = _id;
-				}*/
 				pStmt.close();
 			} catch (SQLException e) {
 				e.printStackTrace();
@@ -360,6 +635,66 @@ System.out.println("setTEACHER3 : "+myRequest);
 		return max+1;
 	}
 	
+	public static Integer getFreeSubjectID(){
+		int max = 0;
+		Connection con = getConnection();
+		if (con == null) {
+			return -1;
+		} else {
+			try {
+				String myRequest = "SELECT MAX(ID) AS MYID FROM SUBJECT";
+				PreparedStatement pStmt = con.prepareStatement(myRequest);
+				ResultSet rs = pStmt.executeQuery();
+				if (rs.next()) {
+					max = rs.getInt("MYID");
+					if (max == 0) max = 1; // cas où MYID == NULL getInt retourne 0 !!!  Empty table
+				}
+				pStmt.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		return max+1;
+	}
+
+	public static Integer getFreeLevelID(){
+		int max = 0;
+		Connection con = getConnection();
+		if (con == null) {
+			return -1;
+		} else {
+			try {
+				String myRequest = "SELECT MAX(ID) AS MYID FROM SCHOOL_LEVEL";
+				PreparedStatement pStmt = con.prepareStatement(myRequest);
+				ResultSet rs = pStmt.executeQuery();
+				if (rs.next()) {
+					max = rs.getInt("MYID");
+					if (max == 0) max = 1; // cas où MYID == NULL getInt retourne 0 !!! Empty table
+				}
+				pStmt.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		return max+1;
+	}
+
 	public static Integer getFreeTeacherID(){
 		int max = 0;
 		Connection con = getConnection();
@@ -367,14 +702,10 @@ System.out.println("setTEACHER3 : "+myRequest);
 			return -1;
 		} else {
 			try {
-				String myRequest = "SELECT MAX(ID) AS MYID FROM TEACHER";//"SELECT * FROM TEACHER";
+				String myRequest = "SELECT MAX(ID) AS MYID FROM TEACHER";
 				PreparedStatement pStmt = con.prepareStatement(myRequest);
 				ResultSet rs = pStmt.executeQuery();
 				if (rs.next()) max = rs.getInt("MYID");
-				/*while (rs.next()) {
-					Integer _id = rs.getInt("ID");
-					if (_id > max) max = _id;
-				}*/
 				pStmt.close();
 			} catch (SQLException e) {
 				e.printStackTrace();
@@ -389,6 +720,33 @@ System.out.println("setTEACHER3 : "+myRequest);
 			}
 		}
 		if (max >= 100) return -1;
+		return max+1;
+	}
+	
+	public static Integer getFreePaiementTecherID(){
+		int max = 0;
+		Connection con = getConnection();
+		if (con == null) {
+			return -1;
+		} else {
+			try {
+				String myRequest = "SELECT MAX(ID) AS MYID FROM PAIEMENT_TEACHER";
+				PreparedStatement pStmt = con.prepareStatement(myRequest);
+				ResultSet rs = pStmt.executeQuery();
+				if (rs.next()) max = rs.getInt("MYID");
+				pStmt.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
 		return max+1;
 	}
 	
@@ -459,13 +817,13 @@ System.out.println("getstudents : "+myRequest);
 					student.add(11, _tel);
 					student.add(12, _dateInscription);
 					
-					myRequestLevel = "SELECT * FROM SCHOOL_LEVEL WHERE ID=" + _id.toString();
+					myRequestLevel = "SELECT LEVEL FROM SCHOOL_LEVEL,STUDENT_LEVEL WHERE SCHOOL_LEVEL.ID=STUDENT_LEVEL.IDLEVEL AND STUDENT_LEVEL.IDSTUDENT=" + _id.toString();
 //Afficher myRequest
 System.out.println("getstudents : "+myRequestLevel);
 					PreparedStatement pStmtLevel = con.prepareStatement(myRequestLevel);
 					ResultSet rsLevel = pStmtLevel.executeQuery();
 					_sLevel = "";
-					if (rsLevel.next()) _sLevel = rsLevel.getString("level");
+					if (rsLevel.next()) _sLevel = rsLevel.getString("LEVEL");
 
 					student.add(13, _sLevel);
 
@@ -486,6 +844,71 @@ System.out.println("getstudents : "+myRequestLevel);
 			}
 		}
 		return students;
+	}
+	
+	public static ArrayList<ArrayList<Object>> getStudents_Registrations() {
+		ArrayList<ArrayList<Object>> registrations = new ArrayList<ArrayList<Object>>();
+
+		Connection con = getConnection();
+		if (con == null) {
+			ArrayList<Object> ret = new ArrayList<Object>();
+			ret.add(0, "Problème de connection à la base de données");
+			registrations.add(0, ret);
+		} else {
+			try {
+				String myRequest = "SELECT student.ID,student.NOM,student.PRENOM,subject.ID,subject.TITLE,school_level.level,teacher.ID,teacher.NOM,teacher.PRENOM,registration.DATE_REG FROM registration, student, subject,teacher,school_level " + 
+						"WHERE registration.IDSTUDENT=student.ID AND registration.IDSUBJECT=subject.ID AND registration.IDTEACHER=teacher.ID AND subject.IDLEVEL=school_level.ID "+
+						"ORDER BY student.NOM,student.PRENOM ASC";
+
+//Afficher myRequest
+System.out.println("getStudents_Registrations : "+myRequest);
+				
+				PreparedStatement pStmt = con.prepareStatement(myRequest);
+				ResultSet rs = pStmt.executeQuery();
+				int j = 0;
+				String _sLevel = "";
+				while (rs.next()) {
+					ArrayList<Object> registration = new ArrayList<Object>();
+
+					Integer _idStudent = rs.getInt("ID");
+					String _nomStudent = rs.getString("student.NOM");
+					String _prenomStudent = rs.getString("student.PRENOM");
+					Integer _idSubject = rs.getInt("subject.ID");
+					String _subject = rs.getString("TITLE");
+					String _level = rs.getString("level");
+					Integer _idTeacher = rs.getInt("teacher.ID");
+					String _nomTeacher = rs.getString("teacher.NOM");
+					String _prenomTeacher = rs.getString("teacher.PRENOM");
+					String _dateInscription = rs.getDate("registration.DATE_REG").toString();
+
+					registration.add(0, _idStudent);
+					registration.add(1, _nomStudent);
+					registration.add(2, _prenomStudent);
+					registration.add(3, _idSubject);
+					registration.add(4, _subject);
+					registration.add(5, _level);
+					registration.add(6, _idTeacher);
+					registration.add(7, _nomTeacher);
+					registration.add(8, _prenomTeacher);
+					registration.add(9, _dateInscription);
+					
+					registrations.add(j, registration);
+					j++;
+				}
+				pStmt.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		return registrations;
 	}
 	
 	public static STUDENT getSTUDENT(Integer id) {
@@ -517,12 +940,12 @@ System.out.println("getSTUDENT(id) : "+myRequest);
 						ret.NUM_TEL = rs.getString("NUM_TEL");
 						ret.DATE_INSCRIPTION = rs.getDate("DATE_INSCRIPTION").toString();
 						
-						myRequest = "SELECT * FROM SCHOOL_LEVEL WHERE ID=" + id.toString();
+						myRequest = "SELECT LEVEL FROM SCHOOL_LEVEL,STUDENT_LEVEL WHERE SCHOOL_LEVEL.ID=STUDENT_LEVEL.IDLEVEL AND STUDENT_LEVEL.IDSTUDENT = " + id.toString();
 //Afficher myRequest
 System.out.println("getSTUDENT(id)1 : "+myRequest);
 						PreparedStatement pStmtLevel = con.prepareStatement(myRequest);
 						ResultSet rsLevel = pStmtLevel.executeQuery();
-						if (rsLevel.next()) ret.schoolLevel = rsLevel.getString("level");
+						if (rsLevel.next()) ret.schoolLevel = rsLevel.getString("LEVEL");
 					}
 					pStmt.close();
 				}
@@ -541,19 +964,69 @@ System.out.println("getSTUDENT(id)1 : "+myRequest);
 		return ret;
 	}
 	
+	public static STUDENT getSTUDENTbyName(String lname, String fname) {
+		STUDENT ret = null;
+		Connection con = getConnection();
+		if (con != null) {
+			try {
+				String myRequest = "";
+				if (lname != null && !lname.isEmpty() && fname != null && !fname.isEmpty()){
+					myRequest = "SELECT * FROM STUDENT WHERE NOM='" + lname + "' AND PRENOM='" + fname + "'";
+//Afficher myRequest
+System.out.println("getSTUDENTbyName1 : "+myRequest);
+
+					PreparedStatement pStmt = con.prepareStatement(myRequest);
+					ResultSet rs = pStmt.executeQuery();
+					if (rs.next()) {
+						ret = new STUDENT();
+						ret.ID = String.valueOf(rs.getInt("ID"));
+						ret.NOM = rs.getString("NOM");
+						ret.PRENOM = rs.getString("PRENOM");
+						ret.DATE_NAIS = rs.getDate("DATE_NAIS").toString();
+						ret.LIEU_NAIS = rs.getString("LIEU_NAIS");
+						ret.prenomPere = rs.getString("PRENOM_PERE");
+						ret.profPere = rs.getString("PROFESSION_PERE");
+						ret.nomMere = rs.getString("NOM_MERE");
+						ret.prenomMere = rs.getString("PRENOM_MERE");
+						ret.profMere = rs.getString("PROFESSION_MERE");
+						ret.ADRESSE = rs.getString("ADRESSE");
+						ret.NUM_TEL = rs.getString("NUM_TEL");
+						ret.DATE_INSCRIPTION = rs.getDate("DATE_INSCRIPTION").toString();
+						
+						myRequest = "SELECT LEVEL FROM SCHOOL_LEVEL,STUDENT_LEVEL WHERE SCHOOL_LEVEL.ID=STUDENT_LEVEL.IDLEVEL AND STUDENT_LEVEL.IDSTUDENT=" + ret.ID;
+//Afficher myRequest
+System.out.println("getSTUDENTbyName2 : "+myRequest);
+						PreparedStatement pStmtLevel = con.prepareStatement(myRequest);
+						ResultSet rsLevel = pStmtLevel.executeQuery();
+						if (rsLevel.next()) ret.schoolLevel = rsLevel.getString("LEVEL");
+					}
+					pStmt.close();
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		return ret;
+	}
+
 	public static ArrayList<SUBJECT> getSUBJECTS() {
 		ArrayList<SUBJECT> subjects = new ArrayList<SUBJECT>();
 
 		Connection con = getConnection();
 		if (con == null) {
-			ArrayList<Object> ret = new ArrayList<Object>();
-			SUBJECT subject = new SUBJECT(0, "Probléme de connection à la base de données");
+			SUBJECT subject = new SUBJECT(0, "Probléme de connection à la base de données", 0);
 			subjects.add(0, subject);
 		} else {
 			try {
-				String myRequest = "";
-				//String d = String.valueOf(date.getYear()+1900)+"-"+String.valueOf(date.getMonth()+1)+"-"+String.valueOf(date.getDate());
-				myRequest = "SELECT * FROM SUBJECT";
+				String myRequest = "SELECT * FROM SUBJECT";
 //Afficher myRequest
 System.out.println("getSUBJECTS : " + myRequest);
 
@@ -563,8 +1036,9 @@ System.out.println("getSUBJECTS : " + myRequest);
 				while (rs.next()) {
 					SUBJECT subject = new SUBJECT();
 
-					subject.idsubject = rs.getInt("IDSUBJECT");
-					subject.intitule = rs.getString("INTITULE");
+					subject.idsubject = rs.getInt("ID");
+					subject.title = rs.getString("TITLE");
+					subject.idlevel = rs.getInt("IDLEVEL");
 
 					subjects.add(j, subject);
 					j++;
@@ -585,6 +1059,652 @@ System.out.println("getSUBJECTS : " + myRequest);
 		return subjects;
 	}
 	
+	public static SUBJECT getSUBJECT_by_ID(int id) {
+		SUBJECT mySubject = null;
+
+		Connection con = getConnection();
+		if (con == null) {
+			mySubject = new SUBJECT(0, "Probléme de connection à la base de données", 0);
+		} else {
+			try {
+				String myRequest = "SELECT * FROM SUBJECT WHERE ID="+id;
+//Afficher myRequest
+System.out.println("getSUBJECT_by_ID : " + myRequest);
+
+				PreparedStatement pStmt = con.prepareStatement(myRequest);
+				ResultSet rs = pStmt.executeQuery();
+				if (rs.next()) {
+					mySubject = new SUBJECT();
+					mySubject.idsubject = rs.getInt("ID");
+					mySubject.title = rs.getString("TITLE");
+					mySubject.idlevel = rs.getInt("IDLEVEL");
+				}
+				pStmt.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		return mySubject;
+	}
+
+	public static SUBJECT getSUBJECT_by_TITLE_Level(String subject, String level) {
+		SUBJECT mySubject = null;
+
+		Connection con = getConnection();
+		if (con == null) {
+			mySubject = new SUBJECT(0, "Probléme de connection à la base de données", 0);
+		} else {
+			try {
+				String myRequest = "";
+				myRequest = "SELECT * FROM SUBJECT,SCHOOL_LEVEL " + 
+						"WHERE SUBJECT.IDLEVEL=SCHOOL_LEVEL.ID AND SUBJECT.TITLE=\""+subject+"\" AND SCHOOL_LEVEL.level=\""+level+"\"";
+//Afficher myRequest
+System.out.println("getSUBJECT_by_TITLE_Level : " + myRequest);
+
+				PreparedStatement pStmt = con.prepareStatement(myRequest);
+				ResultSet rs = pStmt.executeQuery();
+				if (rs.next()) {
+					mySubject = new SUBJECT();
+					mySubject.idsubject = rs.getInt("ID");
+					mySubject.title = rs.getString("TITLE");
+					mySubject.idlevel = rs.getInt("IDLEVEL");
+				}
+				pStmt.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		return mySubject;
+	}
+	
+	public static ArrayList<SUBJECT> getSUBJECT_by_Teacher(int idTeacher) {
+		ArrayList<SUBJECT> subjects = new ArrayList<SUBJECT>();
+
+		Connection con = getConnection();
+		if (con == null) {
+			SUBJECT subject = new SUBJECT(0, "Probléme de connection à la base de données", 0);
+			subjects.add(0, subject);
+		} else {
+			try {
+				String myRequest = "";
+				myRequest = "SELECT SUBJECT.ID,SUBJECT.TITLE,SUBJECT.IDLEVEL "+
+				"FROM TEACHER_SUBJECT,SUBJECT " + 
+				"WHERE TEACHER_SUBJECT.IDSB=SUBJECT.ID AND IDT="+idTeacher;
+//Afficher myRequest
+System.out.println("getSUBJECT_by_Teacher : " + myRequest);
+
+				PreparedStatement pStmt = con.prepareStatement(myRequest);
+				ResultSet rs = pStmt.executeQuery();
+				int j = 0;
+				while (rs.next()) {
+					SUBJECT mySubject = new SUBJECT();
+					mySubject.idsubject = rs.getInt("ID");
+					mySubject.title = rs.getString("TITLE");
+					mySubject.idlevel = rs.getInt("IDLEVEL");
+					
+					subjects.add(j, mySubject);
+					j++;
+				}
+				pStmt.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		return subjects;
+	}
+
+	public static ArrayList<SUBJECT> getSUBJECT_by_Student(int idStudent) {
+		ArrayList<SUBJECT> subjects = new ArrayList<SUBJECT>();
+
+		Connection con = getConnection();
+		if (con == null) {
+			SUBJECT subject = new SUBJECT(0, "Probléme de connection à la base de données", 0);
+			subjects.add(0, subject);
+		} else {
+			try {
+				String myRequest = "";
+				myRequest = "SELECT SUBJECT.ID,SUBJECT.TITLE,SUBJECT.IDLEVEL "+
+				"FROM REGISTRATION,SUBJECT " + 
+				"WHERE REGISTRATION.IDSUBJECT=SUBJECT.ID AND IDSTUDENT="+idStudent;
+//Afficher myRequest
+System.out.println("getSUBJECT_by_Student : " + myRequest);
+
+				PreparedStatement pStmt = con.prepareStatement(myRequest);
+				ResultSet rs = pStmt.executeQuery();
+				int j = 0;
+				while (rs.next()) {
+					SUBJECT mySubject = new SUBJECT();
+					mySubject.idsubject = rs.getInt("ID");
+					mySubject.title = rs.getString("TITLE");
+					mySubject.idlevel = rs.getInt("IDLEVEL");
+					
+					subjects.add(j, mySubject);
+					j++;
+				}
+				pStmt.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		return subjects;
+	}
+	
+	public static ArrayList<SUBJECT> getSUBJECT_by_StudentTeacher(int idStudent, int idTeacher) {
+		ArrayList<SUBJECT> subjects = new ArrayList<SUBJECT>();
+
+		Connection con = getConnection();
+		if (con == null) {
+			SUBJECT subject = new SUBJECT(0, "Probléme de connection à la base de données", 0);
+			subjects.add(0, subject);
+		} else {
+			try {
+				String myRequest = "";
+				myRequest = "SELECT SUBJECT.ID,SUBJECT.TITLE,SUBJECT.IDLEVEL "+
+				"FROM REGISTRATION,SUBJECT " + 
+				"WHERE REGISTRATION.IDSUBJECT=SUBJECT.ID AND IDSTUDENT="+idStudent+" AND IDTEACHER="+idTeacher;
+//Afficher myRequest
+System.out.println("getSUBJECT_by_Student : " + myRequest);
+
+				PreparedStatement pStmt = con.prepareStatement(myRequest);
+				ResultSet rs = pStmt.executeQuery();
+				int j = 0;
+				while (rs.next()) {
+					SUBJECT mySubject = new SUBJECT();
+					mySubject.idsubject = rs.getInt("ID");
+					mySubject.title = rs.getString("TITLE");
+					mySubject.idlevel = rs.getInt("IDLEVEL");
+					
+					subjects.add(j, mySubject);
+					j++;
+				}
+				pStmt.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		return subjects;
+	}
+
+	public static ArrayList<LEVEL> getLEVELS() {
+		ArrayList<LEVEL> levels = new ArrayList<LEVEL>();
+
+		Connection con = getConnection();
+		if (con == null) {
+			levels.add(0, new LEVEL(0,"Probléme de connection à la base de données"));
+		} else {
+			try {
+				String myRequest = "SELECT * FROM SCHOOL_LEVEL";
+//Afficher myRequest
+System.out.println("getLEVELS : " + myRequest);
+
+				PreparedStatement pStmt = con.prepareStatement(myRequest);
+				ResultSet rs = pStmt.executeQuery();
+				int j = 0;
+				while (rs.next()) {
+					LEVEL myLevel = new LEVEL(rs.getInt("ID"), rs.getString("LEVEL"));
+					levels.add(j, myLevel);
+					j++;
+				}
+				pStmt.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		return levels;
+	}
+
+	public static LEVEL getLEVEL_by_ID(int id) {
+		LEVEL myLevel = null;
+
+		Connection con = getConnection();
+		if (con != null) {
+			try {
+				String myRequest = "";
+				myRequest = "SELECT * FROM SCHOOL_LEVEL WHERE ID="+id;
+//Afficher myRequest
+System.out.println("getLEVEL_by_ID : " + myRequest);
+
+				PreparedStatement pStmt = con.prepareStatement(myRequest);
+				ResultSet rs = pStmt.executeQuery();
+				if (rs.next()) {
+					myLevel = new LEVEL(rs.getInt("ID"),rs.getString("LEVEL"));
+				}
+				pStmt.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		return myLevel;
+	}
+	
+	
+	/**
+	 * deleteLEVEL_by_ID allows deleting a school level from database
+	 * @param id School level identifier
+	 * @return Number of affected rows (1:OK, 0:Not OK)
+	 */
+	public static int deleteLEVEL_by_ID(int id) {
+		int rows = 0;
+
+		Connection con = getConnection();
+		if (con != null) {
+			try {
+				String myRequest = "";
+				myRequest = "SELECT SUBJECT.IDLEVEL FROM SUBJECT, STUDENT_LEVEL WHERE SUBJECT.IDLEVEL=STUDENT_LEVEL.IDLEVEL AND SUBJECT.IDLEVEL="+id;
+//Afficher myRequest
+System.out.println("deleteLEVEL_by_ID1 : " + myRequest);
+
+				PreparedStatement pStmt = con.prepareStatement(myRequest);
+				ResultSet rs = pStmt.executeQuery();
+				if (!rs.next()) {
+					pStmt.close();
+	
+					myRequest = "DELETE FROM SCHOOL_LEVEL WHERE ID="+id;
+//Afficher myRequest
+System.out.println("deleteLEVEL_by_ID2 : " + myRequest);
+	
+					pStmt = con.prepareStatement(myRequest);
+					rows = pStmt.executeUpdate();
+					pStmt.close();
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		return rows;
+	}
+
+	/**
+	 * deleteSubject_by_ID allows deleting a subject from database
+	 * @param id Subject identifier
+	 * @return Number of affected rows (1:OK, 0:Not OK)
+	 */
+	public static int deleteSubject_by_ID(int id) {
+		int rows = 0;
+
+		Connection con = getConnection();
+		if (con != null) {
+			try {
+				String myRequest = "";
+				myRequest = "SELECT REGISTRATION.IDSUBJECT FROM REGISTRATION, TEACHER_SUBJECT WHERE REGISTRATION.IDSUBJECT=TEACHER_SUBJECT.IDSB AND REGISTRATION.IDSUBJECT="+id;
+//Afficher myRequest
+System.out.println("deleteSubject_by_ID1 : " + myRequest);
+
+				PreparedStatement pStmt = con.prepareStatement(myRequest);
+				ResultSet rs = pStmt.executeQuery();
+				if (!rs.next()) {
+					pStmt.close();
+					myRequest = "DELETE FROM SUBJECT WHERE ID="+id;
+//Afficher myRequest
+System.out.println("deleteSubject_by_ID2 : " + myRequest);
+
+					pStmt = con.prepareStatement(myRequest);
+					rows = pStmt.executeUpdate();
+					pStmt.close();
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		return rows;
+	}
+
+	/**
+	 * deleteStudent_by_ID allows deleting a student from database
+	 * @param id Student identifier
+	 * @return Number of affected rows (1:OK, 0:Not OK)
+	 */
+	public static int deleteStudent_by_ID(int id) {
+		int ret = 0;
+		int[] rows = null;
+
+		Connection con = getConnection();
+		if (con != null) {
+			try {
+				String myRequest = "";
+				myRequest = "SELECT DISTINCT IDSTUDENT FROM REGISTRATION WHERE IDSTUDENT="+id;
+//Afficher myRequest
+System.out.println("deleteStudent_by_ID1 : " + myRequest);
+
+				PreparedStatement pStmt = con.prepareStatement(myRequest);
+				ResultSet rs = pStmt.executeQuery();
+				if (!rs.next()) {
+					pStmt.close();
+					Statement s = (Statement) con.createStatement();
+					String myRequest1 = "DELETE FROM STUDENT_LEVEL WHERE IDSTUDENT="+id;
+					String myRequest2 = "DELETE FROM PAIEMENT WHERE ID="+id;
+					String myRequest3 = "DELETE FROM ASSURANCE WHERE ID="+id;
+					String myRequest4 = "DELETE FROM STUDENT WHERE ID="+id;
+					s.addBatch(myRequest1);
+					s.addBatch(myRequest2);
+					s.addBatch(myRequest3);
+					s.addBatch(myRequest4);
+//Afficher myRequest
+System.out.println("deleteStudent_by_ID2 : " + s.toString());
+
+					//pStmt = con.prepareStatement(myRequest);
+					rows = s.executeBatch();
+					s.close();
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		if (rows != null) for (int i=0; i<4; i++) ret = ret + rows[i];
+		return ret;
+	}
+	
+	/**
+	 * deleteTeacher_by_ID allows deleting a teacher from database
+	 * @param id Teacher identifier
+	 * @return Number of affected rows (1:OK, 0:Not OK)
+	 */
+	public static int deleteTeacher_by_ID(int id) {
+		int ret = 0;
+		int[] rows = null;
+
+		Connection con = getConnection();
+		if (con != null) {
+			try {
+
+					Statement s = (Statement) con.createStatement();
+					String myRequest1 = "DELETE FROM REGISTRATION WHERE IDTEACHER="+id;
+					String myRequest2 = "DELETE FROM TEACHER_SUBJECT WHERE IDT="+id;
+					String myRequest3 = "DELETE FROM TEACHER WHERE ID="+id;
+//Afficher myRequest
+System.out.println("deleteStudent_by_ID1 : " + myRequest1 + ";" + myRequest2 + ";" + myRequest3);
+					s.addBatch(myRequest1);
+					s.addBatch(myRequest2);
+					s.addBatch(myRequest3);
+
+					rows = s.executeBatch();
+					s.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		if (rows != null) for (int i=0; i<3; i++) ret = ret + rows[i];
+		return ret;
+	}
+
+	/**
+	 * deleteRegistration allows deleting a student registration from database
+	 * @param idSt Student identifier
+	 * @param idT Teacher identifier
+	 * @param idSub Subject identifier
+	 * @return Number of affected rows (1:OK, 0:Not OK)
+	 */
+	public static int deleteRegistration(int idSt, int idT, int idSub) {
+		int rows = 0;
+
+		Connection con = getConnection();
+		if (con != null) {
+			try {
+				String myRequest = "";
+				myRequest = "DELETE FROM REGISTRATION WHERE IDSTUDENT="+idSt+" AND IDTEACHER="+idT+" AND IDSUBJECT="+idSub;
+//Afficher myRequest
+System.out.println("deleteRegistration : " + myRequest);
+				PreparedStatement pStmt = con.prepareStatement(myRequest);
+				rows = pStmt.executeUpdate();
+				pStmt.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		return rows;
+	}
+	
+	/**
+	 * deleteTeacherSubject allows deleting a link between teacher->subject from database
+	 * @param idT Teacher identifier
+	 * @param idSub Subject identifier
+	 * @return Number of affected rows (1:OK, 0:Not OK)
+	 */
+	public static int deleteTeacherSubject(int idT, int idSub) {
+		int rows = 0;
+
+		Connection con = getConnection();
+		if (con != null) {
+			try {
+				String myRequest = "";
+				myRequest = "DELETE FROM TEACHER_SUBJECT WHERE IDT="+idT+" AND IDSB="+idSub;
+//Afficher myRequest
+System.out.println("deleteTeacherSubject : " + myRequest);
+				PreparedStatement pStmt = con.prepareStatement(myRequest);
+				rows = pStmt.executeUpdate();
+				pStmt.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		return rows;
+	}
+
+	/**
+	 * deleteAssurance allows deleting an insurance from database
+	 * @param id Personne's identifier
+	 * @return Number of affected rows (1:OK, 0:Not OK)
+	 */
+	public static int deleteAssurance(int id) {
+		int rows = 0;
+
+		Connection con = getConnection();
+		if (con != null) {
+			try {
+				String myRequest = "";
+				myRequest = "UPDATE ASSURANCE SET debut=\"2018-01-01\",fin=\"2018-01-01\" WHERE ID="+id;
+//Afficher myRequest
+System.out.println("deleteAssurance : " + myRequest);
+				PreparedStatement pStmt = con.prepareStatement(myRequest);
+				rows = pStmt.executeUpdate();
+				pStmt.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		return rows;
+	}
+
+	public static int deletePaiement(int idStudent, int idTeacher, int idSubject, String dateDebut) {
+		int rows = 0;
+
+		Connection con = getConnection();
+		if (con != null) {
+			try {
+				String myRequest = "";
+				myRequest = "DELETE FROM PAIEMENT WHERE ID="+idStudent+" AND IDTEACHER="+idTeacher+" AND IDSUBJECT="+idSubject+" AND DEBUT='"+dateDebut+"'";
+//Afficher myRequest
+System.out.println("deletePaiement : " + myRequest);
+				PreparedStatement pStmt = con.prepareStatement(myRequest);
+				rows = pStmt.executeUpdate();
+				pStmt.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		return rows;
+	}
+
+	public static int deletePaiementTeacher(int idTeacher, int idSubject, String mois) {
+		int rows = 0;
+
+		Connection con = getConnection();
+		if (con != null) {
+			try {
+				String myRequest = "";
+				myRequest = "DELETE FROM PAIEMENT_TEACHER WHERE IDTEACHER="+idTeacher+" AND IDSUBJECT="+idSubject+" AND MOIS='"+mois+"'";
+//Afficher myRequest
+System.out.println("deletePaiementTeacher : " + myRequest);
+				PreparedStatement pStmt = con.prepareStatement(myRequest);
+				rows = pStmt.executeUpdate();
+				pStmt.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		return rows;
+	}
+
+	public static LEVEL getLEVEL_by_levelTitle(String levelTitle) {
+		LEVEL myLevel = null;
+
+		Connection con = getConnection();
+		if (con != null) {
+			try {
+				String myRequest = "";
+				myRequest = "SELECT * FROM SCHOOL_LEVEL WHERE level='"+levelTitle+"'";
+//Afficher myRequest
+System.out.println("getLEVEL_by_levelTitle : " + myRequest);
+
+				PreparedStatement pStmt = con.prepareStatement(myRequest);
+				ResultSet rs = pStmt.executeQuery();
+				if (rs.next()) {
+					myLevel = new LEVEL(rs.getInt("ID"), rs.getString("level"));
+				}
+				pStmt.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		return myLevel;
+	}
+	
 	public static ArrayList<ArrayList<Object>> get_PAIEMENT(Integer id) {
 		ArrayList<ArrayList<Object>> paiements = new ArrayList<ArrayList<Object>>();
 
@@ -596,12 +1716,11 @@ System.out.println("getSUBJECTS : " + myRequest);
 		} else {
 			try {
 				String myRequest = "";
-				if ((id != null	&& id == 0) ||
-					(id != null	&& id == 0)){
+				if (id != null	&& id == 0) {
 					myRequest = "SELECT * FROM PAIEMENT";
 				} else {
 					myRequest = "SELECT * FROM PAIEMENT WHERE ";
-					if (id==null || id.toString().isEmpty() || id == 0)
+					if (id==null || id.toString().isEmpty())
 						myRequest = myRequest + "ID=0";
 					else
 						myRequest = myRequest + "ID=" + id.toString();
@@ -616,12 +1735,18 @@ System.out.println("get_PAIEMENT : "+myRequest);
 					ArrayList<Object> paiement = new ArrayList<Object>();
 
 					Integer _id = rs.getInt("ID");
-					String _mois = rs.getDate("MOIS").toString();
-					String _montant = rs.getString("MONTANT");
+					Integer _idTeacher = rs.getInt("IDTEACHER");
+					Integer _idSubject = rs.getInt("IDSUBJECT");
+					String _debut = rs.getDate("DEBUT").toString();
+					String _fin = rs.getDate("FIN").toString();
+					Float _montant = rs.getFloat("MONTANT");
 
 					paiement.add(0, _id);
-					paiement.add(1, _mois);
-					paiement.add(2, _montant);
+					paiement.add(1, _idTeacher);
+					paiement.add(2, _idSubject);
+					paiement.add(3, _debut);
+					paiement.add(4, _fin);
+					paiement.add(5, _montant);
 
 					paiements.add(j, paiement);
 					j++;
@@ -643,15 +1768,84 @@ System.out.println("get_PAIEMENT : "+myRequest);
 		return paiements;
 	}
 	
-	//date : mm/01/yyyy
-	public static Float get_PAIEMENT(Integer id, String date) {
+	public static ArrayList<ArrayList<Object>> get_PAIEMENT_TEACHER(Integer id) {
+		ArrayList<ArrayList<Object>> paiements = new ArrayList<ArrayList<Object>>();
+
+		Connection con = getConnection();
+		if (con == null) {
+			ArrayList<Object> ret = new ArrayList<Object>();
+			ret.add(0, "Probléme de connection à la base de données");
+			paiements.add(0,ret);
+		} else {
+			try {
+				String myRequest = "";
+				if (id != null	&& id == 0) {
+					myRequest = "SELECT * FROM PAIEMENT_TEACHER";
+				} else {
+					myRequest = "SELECT * FROM PAIEMENT_TEACHER WHERE ";
+					if (id==null || id.toString().isEmpty())
+						myRequest = myRequest + "IDTEACHER=0";
+					else
+						myRequest = myRequest + "IDTEACHER=" + id.toString();
+				}
+//Afficher myRequest
+System.out.println("get_PAIEMENT_TEACHER : "+myRequest);
+
+				PreparedStatement pStmt = con.prepareStatement(myRequest);
+				ResultSet rs = pStmt.executeQuery();
+				int j = 0;
+				while (rs.next()) {
+					ArrayList<Object> paiement = new ArrayList<Object>();
+
+					Integer _id = rs.getInt("ID");
+					Integer _idTeacher = rs.getInt("IDTEACHER");
+					Integer _idSubject = rs.getInt("IDSUBJECT");
+					String _mois = rs.getDate("MOIS").toString();
+					Float _montant = rs.getFloat("MONTANT");
+
+					paiement.add(0, _id);
+					paiement.add(1, _idTeacher);
+					paiement.add(2, _idSubject);
+					paiement.add(3, _mois);
+					paiement.add(4, _montant);
+
+					paiements.add(j, paiement);
+					j++;
+				}
+				pStmt.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+
+		return paiements;
+	}
+	
+	/**
+	 * Get the amount of payment of person number 'id' for a registration with fixed beginning date
+	 * @param id Person's id
+	 * @param idTeacher Teacher's id
+	 * @param idSubject Subject's id
+	 * @param date Beginning date of the payment "yyyy-mm-dd"
+	 * @return Float containing the amount of paiement if exists.
+	 */
+	public static Float get_PAIEMENT(Integer id, Integer idTeacher, Integer idSubject, String date) {
 		Float ret = null;
 		Connection con = getConnection();
 		if (con != null) {
 			try {
 				String myRequest = "";
-				if (id != null	&& id > 0 && date != null && !date.isEmpty())
-					myRequest = "SELECT * FROM PAIEMENT WHERE ID=" + id.toString() + " AND MOIS='"+date+"'";
+				if (id != null	&& id > 0 && idTeacher != null	&& idTeacher > 0 && idSubject != null	&& idSubject > 0 && date != null && !date.isEmpty())
+					myRequest = "SELECT * FROM PAIEMENT WHERE ID=" + id.toString() + "AND IDTEACHER=" + idTeacher.toString() +
+					"AND IDSUBJECT=" + idSubject.toString() + " AND DEBUT='" + date + "'";
 //Afficher myRequest
 System.out.println("get_PAIEMENT : "+myRequest);
 				PreparedStatement pStmt = con.prepareStatement(myRequest);
@@ -674,21 +1868,108 @@ System.out.println("get_PAIEMENT : "+myRequest);
 		return ret;
 	}
 	
-	//date : yyyy-mm-01
-	public static boolean check_PAIEMENT(Integer id, String date) {
+	/**
+	 * Get the amount of teacher's payment.
+	 * @param idTeacher	Teacher's id
+	 * @param idSubject	Subject's id
+	 * @param mois		Month's payment to be checked "yyyy-mm-dd"
+	 * @return Float containing the amount of payment if exists.
+	 */
+	public static Float get_PAIEMENT_TEACHER(Integer idTeacher, Integer idSubject, String mois) {
+		Float ret = null;
+		Connection con = getConnection();
+		if (con != null) {
+			try {
+				String myRequest = "";
+				if (idTeacher != null	&& idTeacher > 0 && idSubject != null	&& idSubject > 0 && mois != null)
+					myRequest = "SELECT * FROM PAIEMENT_TEACHER WHERE IDTEACHER=" + idTeacher.toString() +
+					"AND IDSUBJECT=" + idSubject.toString() + " AND MOIS='" + mois + "'";
+//Afficher myRequest
+System.out.println("get_PAIEMENT_TEACHER : "+myRequest);
+				PreparedStatement pStmt = con.prepareStatement(myRequest);
+				ResultSet rs = pStmt.executeQuery();
+				if (rs.next())
+					ret = Float.parseFloat(rs.getString("MONTANT"));
+				pStmt.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		return ret;
+	}
+	
+	/**
+	 * Allows to check a student's payment
+	 * @param id		Student's id
+	 * @param idTeacher	Teacher's id
+	 * @param idSubject	Subject's id
+	 * @param date		Should be between DEBUT and FIN
+	 * @return	True if a payment exists for a person who payed a registration.
+	 */
+	public static boolean check_PAIEMENT(Integer id, Integer idTeacher, Integer idSubject, String date) {
 		boolean ret = false;
 		Connection con = getConnection();
 		if (con != null) {
 			try {
 				String myRequest = "";
-				if (id != null && date != null)
+				if (id != null && idTeacher != null && idSubject != null && date != null &&
+					id > 0 && idTeacher > 0 && idSubject > 0 && !date.isEmpty()) {
+
+					myRequest = "SELECT * FROM PAIEMENT WHERE ID=" + id.toString() + " AND IDTEACHER=" + idTeacher.toString() +
+							" AND IDSUBJECT=" + idSubject.toString() + " AND DEBUT<'" + date + "' AND FIN>'" + date + "' AND MONTANT>=0.00";
+//Afficher myRequest
+System.out.println("check_PAIEMENT : "+myRequest);
+					PreparedStatement pStmt = con.prepareStatement(myRequest);
+					ResultSet rs = pStmt.executeQuery();
+					if (rs.next())
+						ret = true;
+					pStmt.close();						
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		return ret;
+	}
+	
+	/**
+	 * Allows to check a teacher's payment
+	 * @param		idTeacher	Teacher's id
+	 * @param		idSubject	Subject's id
+	 * @param mois	Month's payment to be checked "yyyy-mm-01"
+	 * @return	True if a payment exists for a person who payed a registration.
+	 */
+	public static boolean check_PAIEMENT_TEACHER(Integer idTeacher, Integer idSubject, String mois) {
+		boolean ret = false;
+		Connection con = getConnection();
+		if (con != null) {
+			try {
+				String myRequest = "";
+				if (idTeacher != null && idSubject != null && mois != null)
 				{
-					if (id > 0 && !date.isEmpty()) {
-						myRequest = "SELECT * FROM PAIEMENT WHERE ID="+id.toString()+" AND MOIS='"+date+"' AND MONTANT>=0.00";
+					if (idTeacher > 0 && idSubject > 0 && !mois.isEmpty()) {
+						myRequest = "SELECT * FROM PAIEMENT_TEACHER WHERE IDTEACHER=" + idTeacher.toString() +
+								" AND IDSUBJECT=" + idSubject.toString() + " AND MOIS='" + mois + "' AND MONTANT>=0.00";
 					}
 				}
 //Afficher myRequest
-System.out.println("check_PAIEMENT : "+myRequest);
+System.out.println("check_PAIEMENT_TEACHER : "+myRequest);
 				PreparedStatement pStmt = con.prepareStatement(myRequest);
 				ResultSet rs = pStmt.executeQuery();
 				while (rs.next())
@@ -709,26 +1990,37 @@ System.out.println("check_PAIEMENT : "+myRequest);
 		return ret;
 	}
 	
-	//date : mm/01/yyyy
-	public static void set_PAIEMENT(Integer id, String date, Float montant) {
+	/**
+	 * @param id		Student's id
+	 * @param idTeacher	Teacher's id
+	 * @param idSubject	Subject's id
+	 * @param dateDebut	yyyy-mm-dd
+	 * @param dateFin	yyyy-mm-dd
+	 * @param montant	Integer
+	 * @return			Number of affected rows
+	 */
+	public static int set_PAIEMENT(Integer id, Integer idTeacher, Integer idSubject, String dateDebut, String dateFin, Float montant) {
+		int rows = 0;
 		Connection con = getConnection();
 		if (con != null) {
 			try {
 				String myRequest = "";
-				if (id != null && date != null)
+				if (id != null && dateDebut != null && dateFin != null)
 				{
-					if (id > 0 && !date.isEmpty()) {
-						if (get_PAIEMENT(id, date) != null)
-							myRequest = "UPDATE PAIEMENT SET MONTANT="+montant.toString()+" WHERE ID="+id.toString()+" AND MOIS='"+date+"'";
+					if (id > 0 && !dateDebut.isEmpty() && !dateFin.isEmpty()) {
+						if (get_PAIEMENT(id, idTeacher, idSubject, dateDebut) != null)
+							myRequest = "UPDATE PAIEMENT SET MONTANT=" + montant.toString() + ", FIN='" + dateFin + "' WHERE ID=" + id.toString() +
+							"AND IDTEACHER=" + idTeacher.toString() + "AND IDSUBJECT=" + idSubject.toString() + " AND DEBUT='" + dateDebut + "'";
 						else
-							myRequest = "INSERT INTO PAIEMENT (ID,MOIS,MONTANT) VALUES ("+id.toString()+",'"+date+"',"+montant.toString()+")";
+							myRequest = "INSERT INTO PAIEMENT (ID,IDTEACHER,IDSUBJECT,DEBUT,FIN,MONTANT) VALUES ("+
+									id.toString()+","+idTeacher.toString()+","+idSubject.toString()+",'"+dateDebut+"','"+dateFin+"',"+montant.toString()+")";
 					}
-				}
 //Afficher myRequest
 System.out.println("set_PAIEMENT : "+myRequest);
-				PreparedStatement pStmt = con.prepareStatement(myRequest);
-				pStmt.executeUpdate();
-				pStmt.close();
+					PreparedStatement pStmt = con.prepareStatement(myRequest);
+					rows = pStmt.executeUpdate();
+					pStmt.close();
+				}
 			} catch (SQLException e) {
 				e.printStackTrace();
 			} finally {
@@ -741,6 +2033,54 @@ System.out.println("set_PAIEMENT : "+myRequest);
 				}
 			}
 		}
+		return rows;
+	}
+	
+	/**
+	 * @param idTeacher	Teacher's id
+	 * @param idSubject	Subject's id
+	 * @param mois	yyyy-mm-dd
+	 * @param montant	Integer
+	 * @return			Number of affected rows
+	 */
+	public static int set_PAIEMENT_TEACHER(Integer idTeacher, Integer idSubject, String mois, Float montant) {
+		int rows = 0;
+		Connection con = getConnection();
+		if (con != null) {
+			try {
+				String myRequest = "";
+				if (idTeacher != null && idSubject != null && mois != null)
+				{
+					if (idTeacher > 0 && idSubject > 0 && !mois.isEmpty()) {
+						String _mois = mois.substring(0, 8) + "01";
+						if ( check_PAIEMENT_TEACHER(idTeacher, idSubject, _mois) )
+							myRequest = "UPDATE PAIEMENT_TEACHER SET MONTANT=" + montant.toString() + ", MOIS='" + _mois + "' WHERE IDTEACHER=" + idTeacher.toString() +
+							"AND IDSUBJECT=" + idSubject.toString() + "'";
+						else {
+							Integer freeId = getFreePaiementTecherID();
+							myRequest = "INSERT INTO PAIEMENT_TEACHER (ID,IDTEACHER,IDSUBJECT,MOIS,MONTANT) VALUES ("+
+									freeId.toString()+","+idTeacher.toString()+","+idSubject.toString()+",'"+_mois+"',"+montant.toString()+")";
+						}
+					}
+//Afficher myRequest
+System.out.println("set_PAIEMENT_TEACHER : "+myRequest);
+					PreparedStatement pStmt = con.prepareStatement(myRequest);
+					rows = pStmt.executeUpdate();
+					pStmt.close();
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		return rows;
 	}
 	
 	public static ArrayList<Object> get_ASSURANCE(Integer id) {
@@ -920,125 +2260,6 @@ System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
 		return 0;
 	}
 	
-	
-	public static void init_PAIEMENT(Integer id) {
-		String baseDir = System.getProperty("jboss.server.base.dir");
-
-		String appDir = baseDir+"\\deployments\\"+(new TOOLS()).getAppName()+".war\\config.xml";
-System.out.println("init_PAIEMENT1 : myDir="+appDir);
-
-		int school_year = getYearFromConfig(appDir);
-//Afficher myRequest
-System.out.println("init_PAIEMENT1 : school_year="+school_year);
-		Connection con = getConnection();
-		if (con != null) {
-			try {
-				String myRequest = "";
-				if (id != null && id > 0) {
-					PreparedStatement pStmt = null;
-					if (get_PAIEMENT(id).size() > 0)
-					{
-						myRequest = "UPDATE PAIEMENT SET MONTANT=-1.00 WHERE ID="+id.toString();
-//Afficher myRequest
-System.out.println("init_PAIEMENT2 : "+myRequest);
-						pStmt = con.prepareStatement(myRequest);
-						pStmt.executeUpdate();
-						pStmt.close();
-					}
-					else
-					{
-						myRequest = "INSERT INTO PAIEMENT (ID,MOIS,MONTANT) VALUES ("+id.toString()+",'"+school_year+"/09/01',-1.00)";
-//Afficher myRequest
-System.out.println("init_PAIEMENT3 : "+myRequest);
-						pStmt = con.prepareStatement(myRequest);
-						pStmt.executeUpdate();
-						pStmt.close();
-						
-						myRequest = "INSERT INTO PAIEMENT (ID,MOIS,MONTANT) VALUES ("+id.toString()+",'"+school_year+"/10/01',-1.00)";
-//Afficher myRequest
-System.out.println("init_PAIEMENT : "+myRequest);
-						pStmt = con.prepareStatement(myRequest);
-						pStmt.executeUpdate();
-						pStmt.close();
-						
-						myRequest = "INSERT INTO PAIEMENT (ID,MOIS,MONTANT) VALUES (" + id.toString() + ",'" + school_year + "/11/01',-1.00)";
-//Afficher myRequest
-System.out.println("init_PAIEMENT : "+myRequest);
-						pStmt = con.prepareStatement(myRequest);
-						pStmt.executeUpdate();
-						pStmt.close();
-
-						myRequest = "INSERT INTO PAIEMENT (ID,MOIS,MONTANT) VALUES (" + id.toString() + ",'" + school_year + "/12/01',-1.00)";
-//Afficher myRequest
-System.out.println("init_PAIEMENT : "+myRequest);
-						pStmt = con.prepareStatement(myRequest);
-						pStmt.executeUpdate();
-						pStmt.close();
-
-						myRequest = "INSERT INTO PAIEMENT (ID,MOIS,MONTANT) VALUES ("+ id.toString() + ",'" + (school_year+1) + "/01/01',-1.00)";
-// Afficher myRequest
-System.out.println("init_PAIEMENT : " + myRequest);
-						pStmt = con.prepareStatement(myRequest);
-						pStmt.executeUpdate();
-						pStmt.close();
-
-						myRequest = "INSERT INTO PAIEMENT (ID,MOIS,MONTANT) VALUES (" + id.toString() + ",'" + (school_year+1) + "/02/01',-1.00)";
-// Afficher myRequest
-System.out.println("init_PAIEMENT : " + myRequest);
-						pStmt = con.prepareStatement(myRequest);
-						pStmt.executeUpdate();
-						pStmt.close();
-
-						myRequest = "INSERT INTO PAIEMENT (ID,MOIS,MONTANT) VALUES (" + id.toString() + ",'" + (school_year+1) + "/03/01',-1.00)";
-// Afficher myRequest
-System.out.println("init_PAIEMENT : " + myRequest);
-						pStmt = con.prepareStatement(myRequest);
-						pStmt.executeUpdate();
-						pStmt.close();
-
-						myRequest = "INSERT INTO PAIEMENT (ID,MOIS,MONTANT) VALUES (" + id.toString() + ",'" + (school_year+1) + "/04/01',-1.00)";
-// Afficher myRequest
-System.out.println("init_PAIEMENT : " + myRequest);
-						pStmt = con.prepareStatement(myRequest);
-						pStmt.executeUpdate();
-						pStmt.close();
-
-						myRequest = "INSERT INTO PAIEMENT (ID,MOIS,MONTANT) VALUES (" + id.toString() + ",'" + (school_year+1) + "/05/01',-1.00)";
-// Afficher myRequest
-System.out.println("init_PAIEMENT : " + myRequest);
-						pStmt = con.prepareStatement(myRequest);
-						pStmt.executeUpdate();
-						pStmt.close();
-
-						myRequest = "INSERT INTO PAIEMENT (ID,MOIS,MONTANT) VALUES (" + id.toString() + ",'" + (school_year+1) + "/06/01',-1.00)";
-// Afficher myRequest
-System.out.println("init_PAIEMENT : " + myRequest);
-						pStmt = con.prepareStatement(myRequest);
-						pStmt.executeUpdate();
-						pStmt.close();
-
-						myRequest = "INSERT INTO PAIEMENT (ID,MOIS,MONTANT) VALUES (" + id.toString() + ",'" + (school_year+1) + "/07/01',-1.00)";
-// Afficher myRequest
-System.out.println("init_PAIEMENT : " + myRequest);
-						pStmt = con.prepareStatement(myRequest);
-						pStmt.executeUpdate();
-						pStmt.close();
-					}
-				}
-			} catch (SQLException e) {
-				e.printStackTrace();
-			} finally {
-				if (con != null) {
-					try {
-						con.close();
-					} catch (SQLException e) {
-						e.printStackTrace();
-					}
-				}
-			}
-		}
-	}
-
 	public static ArrayList<ArrayList<Object>> getTEACHER(Integer id, String nom,String prenom) {
 		ArrayList<ArrayList<Object>> teachers = new ArrayList<ArrayList<Object>>();
 
@@ -1111,7 +2332,113 @@ System.out.println("getTEACHER : "+myRequest);
 		}
 		return teachers;
 	}
+
+	public static Integer getIDSujectbyTitleLevel(String[] subject_title_level) {
+		Integer idSubject = 0;
+		String myRequest = "";
+		Connection con = getConnection();
+		if (con == null) {
+			return null;
+		} else {
+			if (subject_title_level == null || (subject_title_level != null && (subject_title_level[0].isEmpty() || subject_title_level[1].isEmpty()))) {
+				return null;
+			} else {
+				try {
+					myRequest = "SELECT subject.ID FROM subject,school_level WHERE subject.IDLEVEL=school_level.ID and subject.TITLE=\""+subject_title_level[0]+
+							"\" and school_level.level=\""+subject_title_level[1]+"\"";
+//Afficher myRequest
+System.out.println("getIDSujectbyTitleLevel : "+myRequest);
 	
+					PreparedStatement pStmt = con.prepareStatement(myRequest);
+					ResultSet rs = pStmt.executeQuery();
+					if (rs.next()) {
+						idSubject = rs.getInt("ID");
+					}
+					pStmt.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				} finally {
+					if (con != null) {
+						try {
+							con.close();
+						} catch (SQLException e) {
+							e.printStackTrace();
+						}
+					}
+				}
+				return idSubject;
+			}
+		}
+	}
+	
+	/**
+	 * getTEACHERSbySubject allow to get list of teachers using subject title and school level.
+	 * @param subject_title_level : subject_title_level[0]: Subject title, subject_title_level[1]: School level
+	 * @return Array list containing teacher concerned by subject of 'subject_title_level'
+	 */
+	public static ArrayList<TEACHER> getTEACHERSbySubject(String[] subject_title_level) {
+		ArrayList<TEACHER> teachers = new ArrayList<TEACHER>();
+
+		Connection con = getConnection();
+		if (con == null) {
+			teachers.add(0,null);
+		} else {
+			try {
+				Integer idSubject = 0;
+				String myRequest = "";
+				if (subject_title_level == null || (subject_title_level != null && (subject_title_level[0].isEmpty() || subject_title_level[1].isEmpty()))) {
+					return null;
+				} else {
+					myRequest = "SELECT subject.ID FROM subject,school_level WHERE subject.IDLEVEL=school_level.ID and subject.TITLE=\""+subject_title_level[0]+
+					"\" and school_level.level=\""+subject_title_level[1]+"\"";
+//Afficher myRequest
+System.out.println("getTEACHERSbySubject1 : "+myRequest);
+
+					PreparedStatement pStmt = con.prepareStatement(myRequest);
+					ResultSet rs = pStmt.executeQuery();
+					if (rs.next()) {
+						idSubject = rs.getInt("ID");
+						
+						myRequest = "SELECT * FROM TEACHER_SUBJECT,TEACHER WHERE TEACHER_SUBJECT.IDT=TEACHER.ID AND IDSB=" + idSubject.toString();
+//Afficher myRequest
+System.out.println("getTEACHERSbySubject2 : "+myRequest);
+
+						pStmt = con.prepareStatement(myRequest);
+						rs = pStmt.executeQuery();
+						int j = 0;
+						while (rs.next()) {
+							TEACHER myteacher = new TEACHER();
+
+							myteacher.ID = new Integer(rs.getInt("ID")).toString();
+							myteacher.NOM = rs.getString("NOM");
+							myteacher.PRENOM = rs.getString("PRENOM");
+							myteacher.DATE_NAIS = rs.getDate("DATE_NAIS").toString();
+							myteacher.LIEU_NAIS = rs.getString("LIEU_NAIS");
+							myteacher.ADRESSE = rs.getString("ADRESSE");
+							myteacher.NUM_TEL = rs.getString("NUM_TEL");
+							myteacher.DATE_INSCRIPTION = rs.getDate("DATE_INSCRIPTION").toString();
+
+							teachers.add(j, myteacher);
+							j++;
+						}
+					}
+					pStmt.close();
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		return teachers;
+	}
+
 	public static TEACHER getTEACHER(Integer id) {
 		TEACHER ret = null;
 		Connection con = getConnection();
@@ -1151,6 +2478,90 @@ System.out.println("getTEACHER(id) : "+myRequest);
 			}
 		}
 		return ret;
+	}
+	
+	public static TEACHER getTEACHERbyName(String lname, String fname) {
+		TEACHER ret = null;
+		Connection con = getConnection();
+		if (con != null) {
+			try {
+				String myRequest = "";
+				if (lname != null && fname != null && !lname.isEmpty() && !fname.isEmpty()){
+					myRequest = "SELECT * FROM TEACHER WHERE NOM=\"" + lname + "\" AND PRENOM=\"" + fname + "\"";
+				}
+//Afficher myRequest
+System.out.println("getTEACHERbyName(id) : "+myRequest);
+
+				PreparedStatement pStmt = con.prepareStatement(myRequest);
+				ResultSet rs = pStmt.executeQuery();
+				if (rs.next()) {
+					ret = new TEACHER();
+					ret.ID = String.valueOf(rs.getInt("ID"));
+					ret.NOM = rs.getString("NOM");
+					ret.PRENOM = rs.getString("PRENOM");
+					ret.DATE_NAIS = rs.getDate("DATE_NAIS").toString();
+					ret.LIEU_NAIS = rs.getString("LIEU_NAIS");
+					ret.ADRESSE = rs.getString("ADRESSE");
+					ret.NUM_TEL = rs.getString("NUM_TEL");
+					ret.DATE_INSCRIPTION = rs.getDate("DATE_INSCRIPTION").toString();
+				}
+				pStmt.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		return ret;
+	}
+	
+	public static ArrayList<TEACHER> getTEACHER_by_Student(int idStudent) {
+		ArrayList<TEACHER> teachers = new ArrayList<TEACHER>();
+
+		Connection con = getConnection();
+		if (con == null) {
+			teachers.add(0, null);
+		} else {
+			try {
+				String myRequest = "";
+				myRequest = "SELECT TEACHER.ID,TEACHER.NOM,TEACHER.PRENOM "+
+				"FROM REGISTRATION,TEACHER " + 
+				"WHERE REGISTRATION.IDTEACHER=TEACHER.ID AND IDSTUDENT="+idStudent;
+//Afficher myRequest
+System.out.println("getTEACHER_by_Student : " + myRequest);
+
+				PreparedStatement pStmt = con.prepareStatement(myRequest);
+				ResultSet rs = pStmt.executeQuery();
+				int j = 0;
+				while (rs.next()) {
+					TEACHER myTeacher = new TEACHER();
+					myTeacher.ID = rs.getString("ID");
+					myTeacher.NOM = rs.getString("NOM");
+					myTeacher.PRENOM = rs.getString("PRENOM");
+					
+					teachers.add(j, myTeacher);
+					j++;
+				}
+				pStmt.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} finally {
+				if (con != null) {
+					try {
+						con.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		return teachers;
 	}
 	
 	public static ArrayList<ArrayList<Object>> getTEACHER_non_assures() {
@@ -1219,10 +2630,12 @@ System.out.println("getTEACHER_non_assures : "+myRequest);
 			try {
 				String myRequest = "";
 				String d = date.format(formatter);
-				//String d = String.valueOf(date.getYear()+1900)+"-"+String.valueOf(date.getMonth()+1)+"-"+String.valueOf(date.getDate());
-				myRequest = "SELECT * FROM ASSURANCE WHERE ID>100 AND FIN<'"+d+"'";
+				
+				//Etudiants avec assurance périmée
+				myRequest = "SELECT STUDENT.ID,DEBUT,FIN FROM STUDENT,ASSURANCE WHERE STUDENT.ID=ASSURANCE.ID AND STUDENT.ID NOT IN (SELECT ID FROM ASSURANCE WHERE ID>100 AND FIN>='"+d+"')";
+
 //Afficher myRequest
-System.out.println("getSTUDENT_non_assures : "+myRequest);
+System.out.println("getSTUDENT_non_assures1 : "+myRequest);
 
 				PreparedStatement pStmt = con.prepareStatement(myRequest);
 				ResultSet rs = pStmt.executeQuery();
@@ -1241,6 +2654,26 @@ System.out.println("getSTUDENT_non_assures : "+myRequest);
 					j++;
 				}
 				pStmt.close();
+				
+				//Etudiants sans assurance
+				myRequest = "SELECT ID FROM STUDENT WHERE ID NOT IN (SELECT ID FROM ASSURANCE WHERE ID>100)";
+//Afficher myRequest
+System.out.println("getSTUDENT_non_assures2 : "+myRequest);
+				pStmt = con.prepareStatement(myRequest);
+				rs = pStmt.executeQuery();
+				while (rs.next()) {
+					ArrayList<Object> student = new ArrayList<Object>();
+				
+					Integer _id = rs.getInt("ID");
+					student.add(0, _id);
+					student.add(1, "");
+					student.add(2, "");
+				
+					students.add(j, student);
+					j++;
+				}
+				pStmt.close();
+
 			} catch (SQLException e) {
 				e.printStackTrace();
 			} finally {
@@ -1256,11 +2689,11 @@ System.out.println("getSTUDENT_non_assures : "+myRequest);
 		return students;
 	}
 	
-	public static ArrayList<Object> getSTUDENT_non_payes() {
+	public static ArrayList<Object> getSTUDENTS_non_payes() {
 		ArrayList<Object> students = new ArrayList<Object>();
 
 		LocalDate date = LocalDate.now();
-		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-");
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 		
 		Connection con = getConnection();
 		if (con == null) {
@@ -1269,18 +2702,18 @@ System.out.println("getSTUDENT_non_assures : "+myRequest);
 			try {
 				String myRequest = "";
 				String d = date.format(formatter);
-				myRequest = "SELECT * FROM STUDENT LEFT JOIN paiement ON paiement.ID = STUDENT.ID WHERE paiement.ID IS NULL "+
-						"UNION "+
-						"SELECT * FROM STUDENT,paiement WHERE STUDENT.ID=paiement.ID AND STUDENT.ID>100 AND paiement.MOIS='"+d+"01' AND paiement.MONTANT=-1.00";
+				myRequest = "SELECT DISTINCT registration.IDSTUDENT FROM registration " + 
+							"LEFT JOIN paiement ON registration.IDSTUDENT=paiement.ID AND registration.IDTEACHER=paiement.IDTEACHER AND registration.IDSUBJECT=paiement.IDSUBJECT "+
+							"AND DEBUT<='"+d+"' AND FIN>='"+d+"' AND MONTANT>=0 " + 
+							"WHERE paiement.ID IS NULL";
 //Afficher myRequest
-System.out.println("getSTUDENT_non_payes : "+myRequest);
+System.out.println("getSTUDENTS_non_payes : "+myRequest);
 
 				PreparedStatement pStmt = con.prepareStatement(myRequest);
 				ResultSet rs = pStmt.executeQuery();
 				while (rs.next()) {
-					Integer _id = rs.getInt("ID");
-					if (!students.contains(_id))
-						students.add(_id);
+					Integer _id = rs.getInt("IDSTUDENT");
+					students.add(_id);
 				}
 				pStmt.close();
 			} catch (SQLException e) {

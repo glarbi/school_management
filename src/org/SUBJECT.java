@@ -8,12 +8,14 @@ package org;
  *
  */
 public class SUBJECT {
-	public int idsubject;
-	public String intitule;
+	public Integer idsubject;
+	public String title;
+	public Integer idlevel;
 	
-	SUBJECT(int id, String name) {
+	public SUBJECT(int id, String name, int idL) {
 		idsubject = id;
-		intitule = name;
+		title = name;
+		idlevel = idL;
 	}
 
 	public SUBJECT() {
